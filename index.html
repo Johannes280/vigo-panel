@@ -1,15 +1,161 @@
-// Listeyi Oluştur
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Vigo Güvenli İzin Sistemi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #080808; color: #eee; -webkit-user-select: none; user-select: none; }
+        .vigo-card { background: #121212; border: 1px solid #1f1f1f; border-radius: 1.5rem; }
+        .input-locked { background: #0a0a0a !important; cursor: not-allowed !important; opacity: 0.5; }
+        .countdown-glow { text-shadow: 0 0 15px rgba(16, 185, 129, 0.3); }
+        input { background: #1a1a1a !important; border: 1px solid #333 !important; color: #fff !important; pointer-events: auto !important; }
+        /* Kopyalamayı ve yapıştırmayı tamamen engelleme */
+        input { -webkit-user-select: auto !important; user-select: auto !important; }
+    </style>
+</head>
+<body class="p-4 pb-20">
+
+    <div class="max-w-md mx-auto space-y-6">
+        <!-- Header -->
+        <div class="text-center py-4">
+            <div class="inline-block bg-emerald-500 text-black font-black italic px-4 py-1 rounded-md text-xl mb-2">VIGO</div>
+            <h1 class="text-sm font-bold text-gray-400 uppercase tracking-[0.3em]">Milisaniye Korumalı Panel</h1>
+        </div>
+
+        <!-- Zamanlayıcı Kalkanı -->
+        <div id="status-card" class="vigo-card p-6 text-center border-emerald-500/20">
+            <p id="timer-label" class="text-[10px] font-bold text-zinc-500 uppercase mb-2">Sistemin Açılmasına Kalan</p>
+            <div id="countdown" class="text-4xl font-black text-emerald-500 countdown-glow tabular-nums">00:00:00</div>
+        </div>
+
+        <!-- Form Alanı -->
+        <div class="vigo-card p-6 space-y-5">
+            <div>
+                <label class="block text-[10px] font-black text-zinc-500 uppercase ml-1 mb-2">Ad Soyad (Elle Yazınız)</label>
+                <input type="text" id="kurye-ad" autocomplete="off" 
+                       placeholder="AD SOYAD ZORUNLUDUR" 
+                       class="w-full p-4 rounded-xl outline-none focus:border-emerald-500 font-bold uppercase transition-all input-locked" disabled>
+            </div>
+
+            <div class="space-y-3">
+                <label class="block text-[10px] font-black text-zinc-500 uppercase ml-1">İzin Günü</label>
+                <div id="gunler-grid" class="grid gap-2">
+                    <!-- Günler kilitli olarak gelecek -->
+                </div>
+            </div>
+
+            <button onclick="veriyiGonder()" id="submit-btn" disabled 
+                    class="w-full py-5 bg-emerald-500 text-black font-black rounded-xl uppercase tracking-widest text-xs opacity-30 cursor-not-allowed transition-all">
+                SİSTEM KİLİTLİ
+            </button>
+        </div>
+
+        <!-- Canlı Liste -->
+        <div class="vigo-card p-5">
+            <h3 class="text-[10px] font-black text-zinc-500 uppercase mb-4 border-b border-white/5 pb-2 italic">Anlık Kayıtlar</h3>
+            <div id="liste" class="space-y-4"></div>
+        </div>
+    </div>
+
+    <!-- Admin Hidden -->
+    <div onclick="adminPanel()" class="fixed bottom-0 right-0 w-12 h-12 opacity-0 z-50"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, doc, onSnapshot, setDoc, getDoc, collection, getDocs, deleteDoc, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBsm4DNTCY681X1foMbx-79YfDqcMXTAcg",
+            authDomain: "vigoanketler.firebaseapp.com",
+            projectId: "vigoanketler",
+            storageBucket: "vigoanketler.firebasestorage.app",
+            messagingSenderId: "458653861576",
+            appId: "1:458653861576:web:21176fee0e23f7d64007fd"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const GUNLER = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
+        
+        let state = { config: { openDate: "", quotas: {} }, votes: [], isOpen: false };
+
+        // KOPYALAMA-YAPIŞTIRMA ENGELLEME
+        const inputAd = document.getElementById('kurye-ad');
+        inputAd.addEventListener('paste', e => e.preventDefault());
+        inputAd.addEventListener('drop', e => e.preventDefault());
+        inputAd.addEventListener('keydown', e => {
+            if ((e.ctrlKey || e.metaKey) && (e.key === 'v' || e.key === 'V' || e.key === 'c' || e.key === 'C')) {
+                e.preventDefault();
+            }
+        });
+
+        // Verileri Dinle
+        onSnapshot(doc(db, "vigo_safe_v3", "config"), s => { if(s.exists()) state.config = s.data(); render(); });
+        onSnapshot(collection(db, "vigo_safe_v3_votes"), s => {
+            state.votes = s.docs.map(d => d.data());
+            render();
+        });
+
+        function render() {
+            const now = Date.now();
+            const openTs = new Date(state.config.openDate || 0).getTime();
+            state.isOpen = (openTs - now) <= 0;
+
+            // Zamanlayıcıyı Güncelle
+            if (!state.isOpen) {
+                const diff = openTs - now;
+                const h = Math.floor(diff/3600000);
+                const m = Math.floor((diff%3600000)/60000);
+                const s = Math.floor((diff%60000)/1000);
+                document.getElementById('countdown').innerText = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+                
+                inputAd.disabled = true;
+                inputAd.classList.add('input-locked');
+                document.getElementById('submit-btn').disabled = true;
+                document.getElementById('submit-btn').innerText = "SİSTEM KİLİTLİ";
+                document.getElementById('submit-btn').classList.add('opacity-30');
+            } else {
+                document.getElementById('countdown').innerText = "SİSTEM AKTİF";
+                document.getElementById('timer-label').innerText = "KAYITLAR BAŞLADI";
+                inputAd.disabled = false;
+                inputAd.classList.remove('input-locked');
+                document.getElementById('submit-btn').disabled = false;
+                document.getElementById('submit-btn').innerText = "KAYDI TAMAMLA";
+                document.getElementById('submit-btn').classList.remove('opacity-30', 'cursor-not-allowed');
+            }
+
+            // Günleri Oluştur
+            document.getElementById('gunler-grid').innerHTML = GUNLER.map(gun => {
+                const count = state.votes.filter(v => v.gun === gun).length;
+                const max = state.config.quotas?.[gun] || 5;
+                const isFull = count >= max;
+                
+                return `
+                    <label class="flex items-center p-4 border border-white/5 rounded-xl transition-all ${isFull ? 'opacity-20' : 'active:bg-white/5'} ${!state.isOpen ? 'pointer-events-none' : ''}">
+                        <input type="radio" name="gun" value="${gun}" ${isFull || !state.isOpen ? 'disabled' : ''} class="w-5 h-5 accent-emerald-500">
+                        <div class="ml-4 flex justify-between w-full">
+                            <span class="text-xs font-bold uppercase tracking-widest">${gun}</span>
+                            <span class="text-[10px] font-black ${isFull ? 'text-red-500' : 'text-emerald-500'}">${count} / ${max}</span>
+                        </div>
+                    </label>
+                `;
+            }).join('');
+
+            // Listeyi Oluştur
             document.getElementById('liste').innerHTML = GUNLER.map(gun => {
                 const kisiler = state.votes.filter(v => v.gun === gun);
                 if(kisiler.length === 0) return '';
-                return 
+                return `
                     <div>
                         <p class="text-[9px] font-black text-emerald-500 uppercase mb-1 tracking-tighter">${gun}</p>
                         <div class="flex flex-wrap gap-1">
-                            ${kisiler.map(k => <span class="bg-white/5 border border-white/5 px-2 py-1 rounded text-[10px] font-bold text-gray-400">${k.ad}</span>).join('')}
+                            ${kisiler.map(k => `<span class="bg-white/5 border border-white/5 px-2 py-1 rounded text-[10px] font-bold text-gray-400">${k.ad}</span>`).join('')}
                         </div>
                     </div>
-                ;
+                `;
             }).join('');
         }
 
