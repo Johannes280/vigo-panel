@@ -3,102 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Vigo Güvenli İzin Sistemi</title>
+    <title>Vigo Güvenlik Sistemi</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #080808; color: #eee; -webkit-user-select: none; user-select: none; }
-        .vigo-card { background: #121212; border: 1px solid #1f1f1f; border-radius: 1.5rem; }
-        .input-locked { background: #0a0a0a !important; cursor: not-allowed !important; opacity: 0.5; }
-        .countdown-glow { text-shadow: 0 0 15px rgba(16, 185, 129, 0.3); }
-        input[type="text"] { background: #1a1a1a !important; border: 1px solid #333 !important; color: #fff !important; pointer-events: auto !important; -webkit-user-select: auto !important; user-select: auto !important; }
-        .admin-trigger { position: fixed; bottom: 0; right: 0; width: 60px; height: 60px; z-index: 9999; cursor: default; }
-        .modal { background: rgba(0,0,0,0.95); backdrop-filter: blur(15px); display: none; position: fixed; inset: 0; z-index: 10000; overflow-y: auto; }
-        .table-container { background: #111; border: 1px solid #333; border-radius: 1rem; overflow: hidden; }
-        th { background: #1a1a1a; color: #10b981; font-size: 0.65rem; text-transform: uppercase; padding: 12px; text-align: left; letter-spacing: 0.1em; }
-        td { padding: 12px; border-bottom: 1px solid #222; font-size: 0.75rem; color: #ccc; }
-        /* Custom Radio Style */
-        .day-label input:checked + div { border-color: #10b981; background: rgba(16, 185, 129, 0.1); }
-        .day-label input:checked + div span { color: #10b981; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #050505; color: #eee; -webkit-user-select: none; user-select: none; }
+        .vigo-card { background: #0f0f0f; border: 1px solid #1a1a1a; border-radius: 1.5rem; }
+        .input-locked { background: #080808 !important; cursor: not-allowed !important; opacity: 0.4; }
+        .countdown-glow { text-shadow: 0 0 20px rgba(16, 185, 129, 0.4); }
+        input[type="text"] { background: #141414 !important; border: 1px solid #222 !important; color: #fff !important; -webkit-user-select: auto !important; user-select: auto !important; }
+        .admin-trigger { position: fixed; bottom: 0; right: 0; width: 50px; height: 50px; z-index: 9999; }
+        .modal { background: rgba(0,0,0,0.98); backdrop-filter: blur(20px); display: none; position: fixed; inset: 0; z-index: 10000; overflow-y: auto; }
+        .day-label input:checked + div { border-color: #10b981; background: rgba(16, 185, 129, 0.05); }
+        .day-label input:disabled + div { opacity: 0.2; cursor: not-allowed; }
+        #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 11000; display: none; }
     </style>
 </head>
-<body class="p-4 pb-20">
+<body class="p-4 pb-24">
+
+    <!-- Uyarı Mesajı -->
+    <div id="toast" class="bg-red-600 text-white px-6 py-3 rounded-full font-bold text-xs uppercase shadow-2xl"></div>
 
     <div id="user-ui" class="max-w-md mx-auto space-y-6">
-        <div class="text-center py-4">
-            <div class="inline-block bg-emerald-500 text-black font-black italic px-4 py-1 rounded-md text-xl mb-2">VIGO</div>
-            <h1 class="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.4em]">Milisaniye Korumalı Panel</h1>
+        <div class="text-center py-6">
+            <div class="inline-block bg-emerald-500 text-black font-black italic px-5 py-1 rounded-md text-2xl mb-2">VIGO</div>
+            <h1 class="text-[9px] font-black text-zinc-600 uppercase tracking-[0.5em]">Operasyon Guvenlik Katmani v25</h1>
         </div>
 
-        <div class="vigo-card p-6 text-center border-emerald-500/20 shadow-xl">
-            <p id="timer-label" class="text-[10px] font-bold text-zinc-500 uppercase mb-2">Sistemin Açılmasına Kalan</p>
-            <div id="countdown" class="text-4xl font-black text-emerald-500 countdown-glow tabular-nums">--:--:--</div>
+        <!-- Timer -->
+        <div class="vigo-card p-8 text-center border-emerald-500/10 relative overflow-hidden">
+            <div id="pulse-bg" class="absolute inset-0 bg-emerald-500/5 animate-pulse hidden"></div>
+            <p id="timer-label" class="text-[10px] font-bold text-zinc-500 uppercase mb-2 tracking-widest relative z-10">Sistem Acilisina Kalan</p>
+            <div id="countdown" class="text-5xl font-black text-emerald-500 countdown-glow tabular-nums relative z-10 italic tracking-tighter">--:--:--</div>
         </div>
 
-        <div class="vigo-card p-6 space-y-5">
-            <div>
-                <label class="block text-[10px] font-black text-zinc-500 uppercase ml-1 mb-2">Ad Soyad (Elle Yazınız)</label>
-                <input type="text" id="kurye-ad" autocomplete="off" placeholder="AD SOYAD ZORUNLUDUR" 
-                       class="w-full p-4 rounded-xl outline-none focus:border-emerald-500 font-bold uppercase transition-all input-locked" disabled>
+        <!-- Form -->
+        <div class="vigo-card p-6 space-y-6">
+            <div class="space-y-2">
+                <label class="block text-[10px] font-black text-zinc-500 uppercase ml-1">Kurye Ad Soyad (Manuel Giris)</label>
+                <input type="text" id="kurye-ad" autocomplete="off" placeholder="AD SOYAD YAZINIZ" 
+                       class="w-full p-4 rounded-2xl outline-none focus:border-emerald-500 font-bold uppercase transition-all input-locked" disabled>
             </div>
             
-            <div class="space-y-2">
-                <label class="block text-[10px] font-black text-zinc-500 uppercase ml-1">İzin Günü Seçimi</label>
-                <div id="gunler-grid" class="grid gap-2">
-                    <!-- Günler JS ile yüklenecek -->
-                </div>
+            <div class="space-y-3">
+                <label class="block text-[10px] font-black text-zinc-500 uppercase ml-1 italic text-emerald-500/50">Musait Gununuzu Secin</label>
+                <div id="gunler-grid" class="grid gap-2"></div>
             </div>
 
             <button onclick="veriyiGonder()" id="submit-btn" disabled 
-                    class="w-full py-5 bg-emerald-500 text-black font-black rounded-xl uppercase tracking-widest text-xs opacity-30 cursor-not-allowed transition-all">
-                SİSTEM KİLİTLİ
+                    class="w-full py-5 bg-emerald-500 text-black font-black rounded-2xl uppercase tracking-[0.2em] text-xs shadow-lg shadow-emerald-500/10 disabled:opacity-20 transition-all">
+                SISTEM BEKLEMEDE
             </button>
         </div>
 
         <div class="vigo-card p-5">
-            <h3 class="text-[10px] font-black text-zinc-500 uppercase mb-4 border-b border-white/5 pb-2 italic text-center">Canlı Kota Durumu</h3>
+            <h3 class="text-[9px] font-black text-zinc-700 uppercase mb-4 border-b border-white/5 pb-2 italic text-center tracking-widest">Anlik Kontenjan Takibi</h3>
             <div id="canli-liste" class="space-y-3"></div>
         </div>
     </div>
 
-    <!-- YÖNETİCİ MODAL -->
+    <!-- ADMIN MODAL -->
     <div id="admin-modal" class="modal">
         <div class="max-w-4xl mx-auto p-6 space-y-6">
-            <div class="flex justify-between items-center bg-zinc-900 p-6 rounded-2xl border border-zinc-800">
+            <div class="flex justify-between items-center bg-zinc-900 p-8 rounded-3xl border border-zinc-800">
                 <div>
-                    <h2 class="text-2xl font-black text-white italic">OPERASYON PANELİ</h2>
-                    <p class="text-xs text-zinc-500 uppercase">Yönetici Modu</p>
+                    <h2 class="text-3xl font-black text-white italic tracking-tighter">OPERASYON MERKEZI</h2>
+                    <p class="text-[10px] text-zinc-500 uppercase font-bold tracking-widest mt-1">Sistem Kontrol Paneli</p>
                 </div>
-                <div class="flex gap-2">
-                    <button onclick="excelIndir()" class="bg-emerald-600 text-black px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest">Excel İndir</button>
-                    <button onclick="document.getElementById('admin-modal').style.display='none'" class="bg-zinc-800 text-white px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest">Kapat</button>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="bg-zinc-900 p-4 rounded-xl border border-zinc-800">
-                    <p class="text-[10px] text-zinc-500 font-bold mb-1 uppercase tracking-widest">Açılış Tarihi/Saati</p>
-                    <input type="datetime-local" id="admin-date" class="w-full bg-black border border-zinc-700 p-3 rounded text-sm text-white focus:border-emerald-500 outline-none">
-                    <button onclick="saatGuncelle()" class="w-full mt-3 bg-emerald-500 text-black text-[10px] py-3 font-black uppercase rounded-lg">AYARLARI KAYDET</button>
-                </div>
-                <div class="bg-zinc-900 p-4 rounded-xl border border-zinc-800 flex items-center justify-center">
-                    <button onclick="listeSifirla()" class="w-full h-full bg-red-900/20 text-red-500 border border-red-900/50 text-[10px] py-4 font-black uppercase rounded-lg hover:bg-red-900/40 transition-all">TÜM KAYITLARI SIFIRLA</button>
+                <div class="flex gap-3">
+                    <button onclick="excelIndir()" class="bg-white text-black px-6 py-3 rounded-xl text-[10px] font-black uppercase">Excel Raporu</button>
+                    <button onclick="document.getElementById('admin-modal').style.display='none'" class="bg-zinc-800 text-white px-6 py-3 rounded-xl text-[10px] font-black uppercase">Kapat</button>
                 </div>
             </div>
 
-            <div class="table-container shadow-2xl">
-                <table class="w-full">
-                    <thead>
-                        <tr>
-                            <th>Sıra</th>
-                            <th>Ad Soyad</th>
-                            <th>Seçilen Gün</th>
-                            <th>Tarih</th>
-                            <th>Tam Saat (ms)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="admin-table-body"></tbody>
-                </table>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-zinc-900 p-6 rounded-3xl border border-zinc-800 space-y-4">
+                    <h4 class="text-xs font-black text-emerald-500 uppercase italic">Zamanlama Ayari</h4>
+                    <input type="datetime-local" id="admin-date" class="w-full bg-black border border-zinc-700 p-4 rounded-xl text-white outline-none focus:border-emerald-500">
+                    <button onclick="saatGuncelle()" class="w-full bg-emerald-500 text-black font-black py-4 rounded-xl text-xs uppercase">Sistemi Kur</button>
+                </div>
+                <div class="bg-zinc-900 p-6 rounded-3xl border border-zinc-800 flex flex-col justify-center gap-4">
+                    <h4 class="text-xs font-black text-red-500 uppercase italic">Veri Yonetimi</h4>
+                    <button onclick="listeSifirla()" class="w-full bg-red-600/10 text-red-500 border border-red-600/30 font-black py-5 rounded-xl text-xs uppercase hover:bg-red-600 hover:text-white transition-all">Sistemi Tamamen Sifirla</button>
+                </div>
+            </div>
+
+            <div class="bg-zinc-900 rounded-3xl border border-zinc-800 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="border-b border-zinc-800">
+                                <th class="p-6">Sira</th>
+                                <th>Kurye Bilgisi</th>
+                                <th>Secilen</th>
+                                <th>Zaman (ms)</th>
+                                <th>Guvenlik Kimligi (IP/ID)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-table-body" class="divide-y divide-zinc-800/50"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -107,7 +111,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, doc, onSnapshot, setDoc, collection, getDocs, deleteDoc, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, setDoc, collection, getDocs, deleteDoc, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBsm4DNTCY681X1foMbx-79YfDqcMXTAcg",
@@ -122,22 +126,34 @@
         const db = getFirestore(app);
         const GUNLER = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
         
-        let state = { config: { openDate: "" }, votes: [], isOpen: false, serverOffset: 0, selectedDay: null };
+        let state = { config: {}, votes: [], isOpen: false, selectedDay: null, userFingerprint: '', userIP: 'Yukleniyor...' };
         let clickCounter = 0;
 
-        const inputAd = document.getElementById('kurye-ad');
-        inputAd.addEventListener('paste', e => e.preventDefault());
-        inputAd.addEventListener('drop', e => e.preventDefault());
-
-        // SERVER TIME OFFSET HESAPLAMA (Senkronizasyon)
-        async function syncTime() {
-            const start = Date.now();
-            // Basit bir okuma yaparak server zamanını hissetmeye çalışıyoruz
-            // Gerçek senkronizasyon için db'den bir timestamp çekilebilir
-            state.serverOffset = 0; // Varsayılan
+        // GUVENLIK: Cihaz Fingerprint ve IP Alimi
+        async function getSecurityData() {
+            try {
+                // IP Alma
+                const ipRes = await fetch('https://api.ipify.org?format=json');
+                const ipData = await ipRes.json();
+                state.userIP = ipData.ip;
+                
+                // Fingerprint (Basit versiyon)
+                state.userFingerprint = btoa(navigator.userAgent).substring(0, 16);
+            } catch(e) { console.error("Guvenlik verisi alinamadi"); }
         }
 
-        // VERİ DİNLEME
+        // KOPYALAMA ENGELI
+        const inputAd = document.getElementById('kurye-ad');
+        inputAd.addEventListener('paste', e => { showToast("Kopyala-Yapistir Yasaktir!"); e.preventDefault(); });
+        inputAd.addEventListener('contextmenu', e => e.preventDefault());
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg; t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 3000);
+        }
+
+        // VERI DINLEME
         onSnapshot(doc(db, "vigo_safe_v3", "config"), s => { 
             if(s.exists()) {
                 state.config = s.data(); 
@@ -151,107 +167,104 @@
         });
 
         function render() {
-            const now = Date.now() + state.serverOffset;
+            const now = Date.now();
             const openTs = state.config.openDate ? new Date(state.config.openDate).getTime() : 0;
             state.isOpen = openTs > 0 && (openTs - now) <= 0;
 
-            // Timer logic
+            // UI Durumu
             if (!state.isOpen && openTs > 0) {
                 const diff = openTs - now;
                 const h = Math.floor(diff/3600000);
                 const m = Math.floor((diff%3600000)/60000);
                 const s = Math.floor((diff%60000)/1000);
                 document.getElementById('countdown').innerText = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-                document.getElementById('timer-label').innerText = "Sistemin Açılmasına Kalan";
-                inputAd.disabled = true; 
-                inputAd.classList.add('input-locked');
+                inputAd.disabled = true; inputAd.classList.add('input-locked');
                 document.getElementById('submit-btn').disabled = true;
-                document.getElementById('submit-btn').innerText = "SİSTEM KİLİTLİ";
+                document.getElementById('pulse-bg').classList.add('hidden');
             } else if (openTs > 0) {
-                document.getElementById('countdown').innerText = "SİSTEM AKTİF";
-                document.getElementById('timer-label').innerText = "KAYITLAR BAŞLADI";
-                inputAd.disabled = false; 
-                inputAd.classList.remove('input-locked');
+                document.getElementById('countdown').innerText = "SISTEM AKTIF";
+                document.getElementById('timer-label').innerText = "KAYITLAR ACILDI";
+                document.getElementById('pulse-bg').classList.remove('hidden');
+                inputAd.disabled = false; inputAd.classList.remove('input-locked');
                 document.getElementById('submit-btn').disabled = false;
-                document.getElementById('submit-btn').innerText = "KAYDI TAMAMLA";
-                document.getElementById('submit-btn').classList.remove('opacity-30', 'cursor-not-allowed');
+                document.getElementById('submit-btn').innerText = "SECIMI ONAYLA VE KAYDET";
             }
 
-            // GÜNLER (Seçim Koruma Mantığı)
+            // Gunler Grid
             const grid = document.getElementById('gunler-grid');
-            const currentHTML = GUNLER.map(gun => {
+            grid.innerHTML = GUNLER.map(gun => {
                 const count = state.votes.filter(v => v.gun === gun).length;
-                const max = 5; // Sabit kota veya configden alınabilir
+                const max = 5;
                 const isFull = count >= max;
-                const isChecked = state.selectedDay === gun ? 'checked' : '';
+                const isChecked = state.selectedDay === gun;
                 
                 return `
-                    <label class="day-label relative block cursor-pointer ${isFull ? 'opacity-20' : ''}">
-                        <input type="radio" name="gun" value="${gun}" ${isChecked} 
+                    <label class="day-label relative block cursor-pointer">
+                        <input type="radio" name="gun" value="${gun}" ${isChecked ? 'checked' : ''} 
                                ${isFull || !state.isOpen ? 'disabled' : ''} 
                                onchange="window.selectDay('${gun}')"
                                class="absolute opacity-0 w-full h-full cursor-pointer z-10">
-                        <div class="flex items-center p-4 border border-white/5 rounded-xl transition-all">
-                            <div class="w-4 h-4 rounded-full border border-zinc-700 flex items-center justify-center mr-3">
-                                <div class="w-2 h-2 rounded-full ${state.selectedDay === gun ? 'bg-emerald-500' : 'bg-transparent'}"></div>
+                        <div class="flex items-center p-5 border border-white/5 rounded-2xl transition-all">
+                            <div class="w-5 h-5 rounded-full border-2 border-zinc-800 flex items-center justify-center mr-4">
+                                <div class="w-2.5 h-2.5 rounded-full ${isChecked ? 'bg-emerald-500' : 'bg-transparent'}"></div>
                             </div>
-                            <div class="flex justify-between w-full">
-                                <span class="text-xs font-bold uppercase tracking-widest text-zinc-400">${gun}</span>
-                                <span class="text-[10px] font-black ${isFull ? 'text-red-500' : 'text-emerald-500'}">${count} / ${max}</span>
+                            <div class="flex justify-between w-full items-center">
+                                <span class="text-xs font-bold uppercase tracking-widest ${isChecked ? 'text-white' : 'text-zinc-500'}">${gun}</span>
+                                <span class="text-[10px] font-black ${isFull ? 'text-red-500' : 'text-emerald-500'} bg-black px-2 py-1 rounded-md border border-white/5">${count} / ${max}</span>
                             </div>
                         </div>
                     </label>
                 `;
             }).join('');
-            
-            // Sadece içerik değiştiyse güncelle (input odağını bozmamak için)
-            if(grid.innerHTML !== currentHTML) {
-                grid.innerHTML = currentHTML;
-            }
 
-            // LİSTELER
+            // Canli Liste
             document.getElementById('canli-liste').innerHTML = GUNLER.map(gun => {
                 const kisiler = state.votes.filter(v => v.gun === gun);
                 if(kisiler.length === 0) return '';
-                return `<div class="text-[10px] flex gap-2"><span class="text-emerald-500 font-bold uppercase w-20">${gun}:</span> <span class="text-zinc-500">${kisiler.map(k=>k.ad).join(", ")}</span></div>`;
+                return `<div class="text-[10px] border-l-2 border-emerald-500/30 pl-3 py-1"><span class="text-zinc-400 font-bold uppercase mr-2">${gun}:</span> <span class="text-zinc-600 font-medium">${kisiler.map(k=>k.ad).join(", ")}</span></div>`;
             }).join('');
 
+            // Admin Tablo
             document.getElementById('admin-table-body').innerHTML = state.votes.map((v, i) => `
-                <tr>
-                    <td>${i+1}</td>
-                    <td class="font-bold text-white uppercase">${v.ad}</td>
-                    <td><span class="bg-emerald-500/10 text-emerald-500 px-2 py-1 rounded text-[10px] font-bold uppercase">${v.gun}</span></td>
-                    <td>${v.fullDate}</td>
-                    <td class="font-mono text-emerald-400">${v.timeMs}</td>
+                <tr class="hover:bg-white/[0.02] transition-all">
+                    <td class="p-6 text-zinc-600 font-bold">${i+1}</td>
+                    <td class="font-bold text-white uppercase text-[11px]">${v.ad}</td>
+                    <td><span class="bg-emerald-500 text-black px-3 py-1 rounded-full text-[9px] font-black uppercase italic">${v.gun}</span></td>
+                    <td class="font-mono text-emerald-500 text-[10px]">${v.timeMs}</td>
+                    <td class="text-[9px] text-zinc-500 font-mono">${v.ip || 'Bilinmiyor'} / ${v.fingerprint || 'ID'}</td>
                 </tr>
             `).join('');
         }
 
-        window.selectDay = (gun) => {
-            state.selectedDay = gun;
-            render();
-        };
+        window.selectDay = (gun) => { state.selectedDay = gun; render(); };
 
         window.veriyiGonder = async () => {
             const ad = inputAd.value.trim().toUpperCase();
-            if (!ad || ad.split(' ').length < 2) return alert("Lütfen Ad ve Soyadınızı tam yazınız.");
-            if (!state.selectedDay) return alert("Lütfen bir gün seçin.");
+            if (!ad || ad.split(' ').length < 2) return showToast("HATA: Ad ve Soyad eksik!");
+            if (!state.selectedDay) return showToast("HATA: Gun secilmedi!");
 
             const gun = state.selectedDay;
+            // Kayit Anahtari: Hem isim, hem IP, hem Fingerprint kontrolu icin kilit
             const docRef = doc(db, "vigo_safe_v3_votes", ad);
 
             try {
-                await runTransaction(db, async (transaction) => {
-                    const existingVote = await transaction.get(docRef);
-                    if (existingVote.exists()) throw "Zaten bir kaydınız bulunmaktadır.";
+                await runTransaction(db, async (t) => {
+                    const existingVote = await t.get(docRef);
+                    if (existingVote.exists()) throw "HATA: Bu isimle zaten kayit yapilmis!";
 
-                    const allVotesSnapshot = await getDocs(collection(db, "vigo_safe_v3_votes"));
-                    const count = allVotesSnapshot.docs.filter(d => d.data().gun === gun).length;
-                    if (count >= 5) throw "Seçtiğiniz gün milisaniye farkıyla doldu! Lütfen başka bir gün seçin.";
+                    // IP Kontrolu
+                    const allVotes = await getDocs(collection(db, "vigo_safe_v3_votes"));
+                    const ipMatch = allVotes.docs.find(d => d.data().ip === state.userIP || d.data().fingerprint === state.userFingerprint);
+                    if(ipMatch) throw "HATA: Bu cihazdan veya agdan zaten bir secim yapilmis!";
+
+                    const count = allVotes.docs.filter(d => d.data().gun === gun).length;
+                    if (count >= 5) throw "HATA: Bu gun saliselerle doldu! Baska gun secin.";
 
                     const d = new Date();
-                    transaction.set(docRef, { 
+                    t.set(docRef, { 
                         ad, gun, ts: Date.now(), 
+                        ip: state.userIP, 
+                        fingerprint: state.userFingerprint,
                         fullDate: d.toLocaleDateString('tr-TR'),
                         timeMs: d.getHours().toString().padStart(2,'0')+":"+
                                 d.getMinutes().toString().padStart(2,'0')+":"+
@@ -259,17 +272,17 @@
                                 d.getMilliseconds().toString().padStart(3,'0')
                     });
                 });
-                alert("KAYIT BAŞARIYLA TAMAMLANDI!");
-                inputAd.value = "";
-                state.selectedDay = null;
-            } catch (e) { alert(e); }
+                alert("TEBRIKLER: Seciminiz basariyla kaydedildi.");
+                inputAd.value = ""; state.selectedDay = null;
+            } catch (e) { showToast(e); }
         };
 
+        // ADMIN
         window.adminTikla = () => {
             clickCounter++;
             if(clickCounter >= 3) {
-                const pass = prompt("Yönetici Şifresi:");
-                if(pass === "Vig.iSt_26") document.getElementById('admin-modal').style.display='block';
+                const p = prompt("Yonetici Sifresi:");
+                if(p === "Vig.iSt_26") document.getElementById('admin-modal').style.display='block';
                 clickCounter = 0;
             }
             setTimeout(()=>clickCounter=0, 2000);
@@ -277,33 +290,31 @@
 
         window.saatGuncelle = async () => {
             const dt = document.getElementById('admin-date').value;
-            if(!dt) return alert("Lütfen bir tarih seçin.");
+            if(!dt) return showToast("Tarih secin!");
             await setDoc(doc(db, "vigo_safe_v3", "config"), { openDate: dt }, { merge: true });
-            alert("Açılış saati tüm kuryeler için güncellendi.");
+            alert("Sistem zamani tum cihazlar icin guncellendi.");
         };
 
         window.listeSifirla = async () => {
-            if(!confirm("DİKKAT: Tüm kurye kayıtları kalıcı olarak silinecek. Onaylıyor musunuz?")) return;
+            if(!confirm("DIKKAT: Tum IP ve kurye verileri silinecek. Onayliyor musunuz?")) return;
             const s = await getDocs(collection(db, "vigo_safe_v3_votes"));
-            const promises = s.docs.map(d => deleteDoc(d.ref));
-            await Promise.all(promises);
-            alert("Sistem başarıyla sıfırlandı.");
+            await Promise.all(s.docs.map(d => deleteDoc(d.ref)));
+            alert("Sistem tamamen temizlendi.");
         };
 
         window.excelIndir = () => {
-            let csv = "\uFEFFSıra,Ad Soyad,Seçilen Gün,Tarih,Saat (Milisaniye)\n";
+            let csv = "\uFEFFSira,Ad Soyad,Gun,Tarih,Milisaniye,IP Adresi\n";
             state.votes.forEach((v, i) => {
-                csv += `${i+1},${v.ad},${v.gun},${v.fullDate},${v.timeMs}\n`;
+                csv += `${i+1},${v.ad},${v.gun},${v.fullDate},${v.timeMs},${v.ip}\n`;
             });
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = `Vigo_Rapor_${new Date().toLocaleDateString('tr-TR')}.csv`;
-            link.click();
+            const b = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const l = document.createElement("a");
+            l.href = URL.createObjectURL(b);
+            l.download = `VIGO_KESIN_LISTE.csv`;
+            l.click();
         };
 
-        // Başlat
-        syncTime();
+        getSecurityData();
         setInterval(render, 1000);
     </script>
 </body>
