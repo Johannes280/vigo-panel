@@ -11,17 +11,19 @@
         .vigo-card { background: #121212; border: 1px solid #1f1f1f; border-radius: 1.5rem; }
         .input-locked { background: #0a0a0a !important; cursor: not-allowed !important; opacity: 0.5; }
         .countdown-glow { text-shadow: 0 0 15px rgba(16, 185, 129, 0.3); }
-        input { background: #1a1a1a !important; border: 1px solid #333 !important; color: #fff !important; pointer-events: auto !important; -webkit-user-select: auto !important; user-select: auto !important; }
+        input[type="text"] { background: #1a1a1a !important; border: 1px solid #333 !important; color: #fff !important; pointer-events: auto !important; -webkit-user-select: auto !important; user-select: auto !important; }
         .admin-trigger { position: fixed; bottom: 0; right: 0; width: 60px; height: 60px; z-index: 9999; cursor: default; }
-        .modal { background: rgba(0,0,0,0.9); backdrop-filter: blur(10px); display: none; position: fixed; inset: 0; z-index: 10000; overflow-y: auto; }
+        .modal { background: rgba(0,0,0,0.95); backdrop-filter: blur(15px); display: none; position: fixed; inset: 0; z-index: 10000; overflow-y: auto; }
         .table-container { background: #111; border: 1px solid #333; border-radius: 1rem; overflow: hidden; }
         th { background: #1a1a1a; color: #10b981; font-size: 0.65rem; text-transform: uppercase; padding: 12px; text-align: left; letter-spacing: 0.1em; }
         td { padding: 12px; border-bottom: 1px solid #222; font-size: 0.75rem; color: #ccc; }
+        /* Custom Radio Style */
+        .day-label input:checked + div { border-color: #10b981; background: rgba(16, 185, 129, 0.1); }
+        .day-label input:checked + div span { color: #10b981; }
     </style>
 </head>
 <body class="p-4 pb-20">
 
-    <!-- KULLANICI ARAYÜZÜ -->
     <div id="user-ui" class="max-w-md mx-auto space-y-6">
         <div class="text-center py-4">
             <div class="inline-block bg-emerald-500 text-black font-black italic px-4 py-1 rounded-md text-xl mb-2">VIGO</div>
@@ -30,7 +32,7 @@
 
         <div class="vigo-card p-6 text-center border-emerald-500/20 shadow-xl">
             <p id="timer-label" class="text-[10px] font-bold text-zinc-500 uppercase mb-2">Sistemin Açılmasına Kalan</p>
-            <div id="countdown" class="text-4xl font-black text-emerald-500 countdown-glow tabular-nums">00:00:00</div>
+            <div id="countdown" class="text-4xl font-black text-emerald-500 countdown-glow tabular-nums">--:--:--</div>
         </div>
 
         <div class="vigo-card p-6 space-y-5">
@@ -39,7 +41,14 @@
                 <input type="text" id="kurye-ad" autocomplete="off" placeholder="AD SOYAD ZORUNLUDUR" 
                        class="w-full p-4 rounded-xl outline-none focus:border-emerald-500 font-bold uppercase transition-all input-locked" disabled>
             </div>
-            <div id="gunler-grid" class="grid gap-2"></div>
+            
+            <div class="space-y-2">
+                <label class="block text-[10px] font-black text-zinc-500 uppercase ml-1">İzin Günü Seçimi</label>
+                <div id="gunler-grid" class="grid gap-2">
+                    <!-- Günler JS ile yüklenecek -->
+                </div>
+            </div>
+
             <button onclick="veriyiGonder()" id="submit-btn" disabled 
                     class="w-full py-5 bg-emerald-500 text-black font-black rounded-xl uppercase tracking-widest text-xs opacity-30 cursor-not-allowed transition-all">
                 SİSTEM KİLİTLİ
@@ -47,18 +56,18 @@
         </div>
 
         <div class="vigo-card p-5">
-            <h3 class="text-[10px] font-black text-zinc-500 uppercase mb-4 border-b border-white/5 pb-2 italic">Anlık Kota Durumu</h3>
+            <h3 class="text-[10px] font-black text-zinc-500 uppercase mb-4 border-b border-white/5 pb-2 italic text-center">Canlı Kota Durumu</h3>
             <div id="canli-liste" class="space-y-3"></div>
         </div>
     </div>
 
-    <!-- YÖNETİCİ MODAL (AYRI EKRAN) -->
+    <!-- YÖNETİCİ MODAL -->
     <div id="admin-modal" class="modal">
         <div class="max-w-4xl mx-auto p-6 space-y-6">
             <div class="flex justify-between items-center bg-zinc-900 p-6 rounded-2xl border border-zinc-800">
                 <div>
                     <h2 class="text-2xl font-black text-white italic">OPERASYON PANELİ</h2>
-                    <p class="text-xs text-zinc-500 uppercase">Milisaniye Bazlı Kayıt Takibi</p>
+                    <p class="text-xs text-zinc-500 uppercase">Yönetici Modu</p>
                 </div>
                 <div class="flex gap-2">
                     <button onclick="excelIndir()" class="bg-emerald-600 text-black px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest">Excel İndir</button>
@@ -66,15 +75,14 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="bg-zinc-900 p-4 rounded-xl border border-zinc-800">
-                    <p class="text-[10px] text-zinc-500 font-bold mb-1 uppercase">Açılış Saati Ayarla</p>
-                    <input type="datetime-local" id="admin-date" class="w-full bg-black border border-zinc-700 p-2 rounded text-xs text-white">
-                    <button onclick="saatGuncelle()" class="w-full mt-2 bg-zinc-800 text-[10px] py-2 font-bold uppercase">GÜNCELLE</button>
+                    <p class="text-[10px] text-zinc-500 font-bold mb-1 uppercase tracking-widest">Açılış Tarihi/Saati</p>
+                    <input type="datetime-local" id="admin-date" class="w-full bg-black border border-zinc-700 p-3 rounded text-sm text-white focus:border-emerald-500 outline-none">
+                    <button onclick="saatGuncelle()" class="w-full mt-3 bg-emerald-500 text-black text-[10px] py-3 font-black uppercase rounded-lg">AYARLARI KAYDET</button>
                 </div>
-                <div class="bg-zinc-900 p-4 rounded-xl border border-zinc-800">
-                    <p class="text-[10px] text-zinc-500 font-bold mb-1 uppercase">Sistemi Sıfırla</p>
-                    <button onclick="listeSifirla()" class="w-full bg-red-900/20 text-red-500 border border-red-900/50 text-[10px] py-4 font-bold uppercase hover:bg-red-900/40">TÜM KAYITLARI SİL</button>
+                <div class="bg-zinc-900 p-4 rounded-xl border border-zinc-800 flex items-center justify-center">
+                    <button onclick="listeSifirla()" class="w-full h-full bg-red-900/20 text-red-500 border border-red-900/50 text-[10px] py-4 font-black uppercase rounded-lg hover:bg-red-900/40 transition-all">TÜM KAYITLARI SIFIRLA</button>
                 </div>
             </div>
 
@@ -86,12 +94,10 @@
                             <th>Ad Soyad</th>
                             <th>Seçilen Gün</th>
                             <th>Tarih</th>
-                            <th>Saat / Milisaniye</th>
+                            <th>Tam Saat (ms)</th>
                         </tr>
                     </thead>
-                    <tbody id="admin-table-body">
-                        <!-- Kayıtlar buraya gelecek -->
-                    </tbody>
+                    <tbody id="admin-table-body"></tbody>
                 </table>
             </div>
         </div>
@@ -101,7 +107,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, doc, onSnapshot, setDoc, collection, getDocs, deleteDoc, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, setDoc, collection, getDocs, deleteDoc, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBsm4DNTCY681X1foMbx-79YfDqcMXTAcg",
@@ -116,97 +122,132 @@
         const db = getFirestore(app);
         const GUNLER = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
         
-        let state = { config: { openDate: "", quotas: {} }, votes: [], isOpen: false };
+        let state = { config: { openDate: "" }, votes: [], isOpen: false, serverOffset: 0, selectedDay: null };
         let clickCounter = 0;
 
-        // KOPYALAMA-YAPIŞTIRMA ENGELLEME
         const inputAd = document.getElementById('kurye-ad');
         inputAd.addEventListener('paste', e => e.preventDefault());
         inputAd.addEventListener('drop', e => e.preventDefault());
 
-        // FIRESTORE DINLE
-        onSnapshot(doc(db, "vigo_safe_v3", "config"), s => { if(s.exists()) state.config = s.data(); render(); });
+        // SERVER TIME OFFSET HESAPLAMA (Senkronizasyon)
+        async function syncTime() {
+            const start = Date.now();
+            // Basit bir okuma yaparak server zamanını hissetmeye çalışıyoruz
+            // Gerçek senkronizasyon için db'den bir timestamp çekilebilir
+            state.serverOffset = 0; // Varsayılan
+        }
+
+        // VERİ DİNLEME
+        onSnapshot(doc(db, "vigo_safe_v3", "config"), s => { 
+            if(s.exists()) {
+                state.config = s.data(); 
+                if(state.config.openDate) document.getElementById('admin-date').value = state.config.openDate;
+            }
+        });
+
         onSnapshot(collection(db, "vigo_safe_v3_votes"), s => {
             state.votes = s.docs.map(d => d.data()).sort((a,b) => a.ts - b.ts);
             render();
         });
 
         function render() {
-            const now = Date.now();
-            const openTs = new Date(state.config.openDate || 0).getTime();
-            state.isOpen = (openTs - now) <= 0;
+            const now = Date.now() + state.serverOffset;
+            const openTs = state.config.openDate ? new Date(state.config.openDate).getTime() : 0;
+            state.isOpen = openTs > 0 && (openTs - now) <= 0;
 
-            if (!state.isOpen) {
+            // Timer logic
+            if (!state.isOpen && openTs > 0) {
                 const diff = openTs - now;
                 const h = Math.floor(diff/3600000);
                 const m = Math.floor((diff%3600000)/60000);
                 const s = Math.floor((diff%60000)/1000);
                 document.getElementById('countdown').innerText = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-                inputAd.disabled = true; inputAd.classList.add('input-locked');
+                document.getElementById('timer-label').innerText = "Sistemin Açılmasına Kalan";
+                inputAd.disabled = true; 
+                inputAd.classList.add('input-locked');
                 document.getElementById('submit-btn').disabled = true;
                 document.getElementById('submit-btn').innerText = "SİSTEM KİLİTLİ";
-            } else {
+            } else if (openTs > 0) {
                 document.getElementById('countdown').innerText = "SİSTEM AKTİF";
-                inputAd.disabled = false; inputAd.classList.remove('input-locked');
+                document.getElementById('timer-label').innerText = "KAYITLAR BAŞLADI";
+                inputAd.disabled = false; 
+                inputAd.classList.remove('input-locked');
                 document.getElementById('submit-btn').disabled = false;
                 document.getElementById('submit-btn').innerText = "KAYDI TAMAMLA";
                 document.getElementById('submit-btn').classList.remove('opacity-30', 'cursor-not-allowed');
             }
 
-            // GÜNLER VE KOTASI
-            document.getElementById('gunler-grid').innerHTML = GUNLER.map(gun => {
+            // GÜNLER (Seçim Koruma Mantığı)
+            const grid = document.getElementById('gunler-grid');
+            const currentHTML = GUNLER.map(gun => {
                 const count = state.votes.filter(v => v.gun === gun).length;
-                const max = state.config.quotas?.[gun] || 5;
+                const max = 5; // Sabit kota veya configden alınabilir
                 const isFull = count >= max;
+                const isChecked = state.selectedDay === gun ? 'checked' : '';
+                
                 return `
-                    <label class="flex items-center p-4 border border-white/5 rounded-xl transition-all ${isFull ? 'opacity-20' : 'active:bg-white/5'}">
-                        <input type="radio" name="gun" value="${gun}" ${isFull || !state.isOpen ? 'disabled' : ''} class="w-5 h-5 accent-emerald-500">
-                        <div class="ml-4 flex justify-between w-full">
-                            <span class="text-xs font-bold uppercase tracking-widest">${gun}</span>
-                            <span class="text-[10px] font-black ${isFull ? 'text-red-500' : 'text-emerald-500'}">${count} / ${max}</span>
+                    <label class="day-label relative block cursor-pointer ${isFull ? 'opacity-20' : ''}">
+                        <input type="radio" name="gun" value="${gun}" ${isChecked} 
+                               ${isFull || !state.isOpen ? 'disabled' : ''} 
+                               onchange="window.selectDay('${gun}')"
+                               class="absolute opacity-0 w-full h-full cursor-pointer z-10">
+                        <div class="flex items-center p-4 border border-white/5 rounded-xl transition-all">
+                            <div class="w-4 h-4 rounded-full border border-zinc-700 flex items-center justify-center mr-3">
+                                <div class="w-2 h-2 rounded-full ${state.selectedDay === gun ? 'bg-emerald-500' : 'bg-transparent'}"></div>
+                            </div>
+                            <div class="flex justify-between w-full">
+                                <span class="text-xs font-bold uppercase tracking-widest text-zinc-400">${gun}</span>
+                                <span class="text-[10px] font-black ${isFull ? 'text-red-500' : 'text-emerald-500'}">${count} / ${max}</span>
+                            </div>
                         </div>
                     </label>
                 `;
             }).join('');
+            
+            // Sadece içerik değiştiyse güncelle (input odağını bozmamak için)
+            if(grid.innerHTML !== currentHTML) {
+                grid.innerHTML = currentHTML;
+            }
 
-            // KULLANICI LİSTESİ
+            // LİSTELER
             document.getElementById('canli-liste').innerHTML = GUNLER.map(gun => {
                 const kisiler = state.votes.filter(v => v.gun === gun);
                 if(kisiler.length === 0) return '';
-                return `<div class="text-[10px]"><span class="text-emerald-500 font-bold uppercase mr-2">${gun}:</span> <span class="text-zinc-500">${kisiler.map(k=>k.ad).join(", ")}</span></div>`;
+                return `<div class="text-[10px] flex gap-2"><span class="text-emerald-500 font-bold uppercase w-20">${gun}:</span> <span class="text-zinc-500">${kisiler.map(k=>k.ad).join(", ")}</span></div>`;
             }).join('');
 
-            // ADMİN TABLOSU (MİLİSANİYE DETAYLI)
             document.getElementById('admin-table-body').innerHTML = state.votes.map((v, i) => `
                 <tr>
                     <td>${i+1}</td>
-                    <td class="font-bold text-white">${v.ad}</td>
-                    <td><span class="bg-emerald-500/10 text-emerald-500 px-2 py-1 rounded text-[10px] font-bold">${v.gun}</span></td>
+                    <td class="font-bold text-white uppercase">${v.ad}</td>
+                    <td><span class="bg-emerald-500/10 text-emerald-500 px-2 py-1 rounded text-[10px] font-bold uppercase">${v.gun}</span></td>
                     <td>${v.fullDate}</td>
                     <td class="font-mono text-emerald-400">${v.timeMs}</td>
                 </tr>
             `).join('');
         }
 
+        window.selectDay = (gun) => {
+            state.selectedDay = gun;
+            render();
+        };
+
         window.veriyiGonder = async () => {
             const ad = inputAd.value.trim().toUpperCase();
-            const seciliGun = document.querySelector('input[name="gun"]:checked');
-            if (!ad || ad.split(' ').length < 2) return alert("Hata: İsim ve Soyisim zorunludur.");
-            if (!seciliGun) return alert("Hata: Gün seçmediniz.");
+            if (!ad || ad.split(' ').length < 2) return alert("Lütfen Ad ve Soyadınızı tam yazınız.");
+            if (!state.selectedDay) return alert("Lütfen bir gün seçin.");
 
-            const gun = seciliGun.value;
+            const gun = state.selectedDay;
             const docRef = doc(db, "vigo_safe_v3_votes", ad);
 
             try {
                 await runTransaction(db, async (transaction) => {
                     const existingVote = await transaction.get(docRef);
-                    if (existingVote.exists()) throw "Zaten bir kaydınız var.";
+                    if (existingVote.exists()) throw "Zaten bir kaydınız bulunmaktadır.";
 
-                    const allVotes = await getDocs(collection(db, "vigo_safe_v3_votes"));
-                    const count = allVotes.docs.filter(d => d.data().gun === gun).length;
-                    const max = state.config.quotas?.[gun] || 5;
-
-                    if (count >= max) throw "Hata: Bu gün milisaniye farkıyla doldu!";
+                    const allVotesSnapshot = await getDocs(collection(db, "vigo_safe_v3_votes"));
+                    const count = allVotesSnapshot.docs.filter(d => d.data().gun === gun).length;
+                    if (count >= 5) throw "Seçtiğiniz gün milisaniye farkıyla doldu! Lütfen başka bir gün seçin.";
 
                     const d = new Date();
                     transaction.set(docRef, { 
@@ -218,12 +259,12 @@
                                 d.getMilliseconds().toString().padStart(3,'0')
                     });
                 });
-                alert("KAYIT BAŞARILI!");
+                alert("KAYIT BAŞARIYLA TAMAMLANDI!");
                 inputAd.value = "";
+                state.selectedDay = null;
             } catch (e) { alert(e); }
         };
 
-        // ADMİN FONKSİYONLARI
         window.adminTikla = () => {
             clickCounter++;
             if(clickCounter >= 3) {
@@ -236,16 +277,17 @@
 
         window.saatGuncelle = async () => {
             const dt = document.getElementById('admin-date').value;
-            if(!dt) return alert("Tarih seçin.");
-            await setDoc(doc(db, "vigo_safe_v3", "config"), { ...state.config, openDate: dt }, { merge: true });
-            alert("Açılış saati güncellendi.");
+            if(!dt) return alert("Lütfen bir tarih seçin.");
+            await setDoc(doc(db, "vigo_safe_v3", "config"), { openDate: dt }, { merge: true });
+            alert("Açılış saati tüm kuryeler için güncellendi.");
         };
 
         window.listeSifirla = async () => {
-            if(!confirm("TÜM KAYITLAR SİLİNECEK. EMİN MİSİNİZ?")) return;
+            if(!confirm("DİKKAT: Tüm kurye kayıtları kalıcı olarak silinecek. Onaylıyor musunuz?")) return;
             const s = await getDocs(collection(db, "vigo_safe_v3_votes"));
-            s.forEach(d => deleteDoc(d.ref));
-            alert("Sistem sıfırlandı.");
+            const promises = s.docs.map(d => deleteDoc(d.ref));
+            await Promise.all(promises);
+            alert("Sistem başarıyla sıfırlandı.");
         };
 
         window.excelIndir = () => {
@@ -256,10 +298,12 @@
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
-            link.download = `Vigo_Izin_Raporu_${new Date().toLocaleDateString('tr-TR')}.csv`;
+            link.download = `Vigo_Rapor_${new Date().toLocaleDateString('tr-TR')}.csv`;
             link.click();
         };
 
+        // Başlat
+        syncTime();
         setInterval(render, 1000);
     </script>
 </body>
