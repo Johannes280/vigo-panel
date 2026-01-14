@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Vigo v75 Emergency</title>
+    <title>Vigo v76 Categorized</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700;800&family=Plus+Jakarta+Sans:wght@400;700;800&display=swap');
@@ -40,6 +40,11 @@
         
         .modal-active { display: flex !important; }
         .hidden { display: none !important; }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #222; border-radius: 10px; }
     </style>
 </head>
 <body class="bg-black min-h-screen p-4 pb-24">
@@ -54,11 +59,11 @@
     <!-- Admin Auth -->
     <div id="auth-modal" class="fixed inset-0 bg-black/95 z-[99999] hidden flex-col items-center justify-center p-6">
         <div class="w-full max-w-xs space-y-4">
-            <h2 class="text-2xl font-black italic text-center uppercase tracking-tighter">Admin Girişi</h2>
-            <input type="password" id="admin-pass" placeholder="Şifre" class="w-full p-5 rounded-2xl text-center font-black text-lg">
+            <h2 class="text-2xl font-black italic text-center uppercase tracking-tighter text-emerald-500">Yönetim Kilidi</h2>
+            <input type="password" id="admin-pass" placeholder="Güvenlik Kodu" class="w-full p-5 rounded-2xl text-center font-black text-lg">
             <div class="grid grid-cols-2 gap-2">
-                <button onclick="checkAdminPass()" class="bg-emerald-500 text-black font-black py-4 rounded-xl text-xs uppercase">GİRİŞ</button>
-                <button onclick="closeAuth()" class="bg-zinc-800 text-white font-black py-4 rounded-xl text-xs uppercase">İPTAL</button>
+                <button onclick="checkAdminPass()" class="bg-emerald-500 text-black font-black py-4 rounded-xl text-xs uppercase">ONAYLA</button>
+                <button onclick="closeAuth()" class="bg-zinc-800 text-white font-black py-4 rounded-xl text-xs uppercase">VAZGEÇ</button>
             </div>
         </div>
     </div>
@@ -70,68 +75,101 @@
             <div onclick="countAdminClicks()" class="flex items-center gap-2 cursor-pointer transition-transform active:scale-95">
                 <div class="bg-white text-black font-black italic px-3 py-1 rounded-lg text-lg tracking-tighter">VIGO</div>
                 <div class="flex flex-col">
-                    <span class="text-[10px] font-black text-emerald-500 leading-none uppercase">Emergency</span>
-                    <span class="text-[8px] font-bold text-zinc-600">v75.0.0</span>
+                    <span class="text-[10px] font-black text-emerald-500 leading-none uppercase">Categorized</span>
+                    <span class="text-[8px] font-bold text-zinc-600">v76.2.0</span>
                 </div>
             </div>
             <div id="conn-pill" class="flex items-center gap-2 bg-zinc-900/50 px-3 py-2 rounded-full border border-white/5">
                 <div id="conn-dot" class="w-2 h-2 rounded-full bg-emerald-500"></div>
-                <span id="conn-text" class="text-[9px] font-black text-emerald-500 uppercase tracking-tighter">SİSTEM HAZIR</span>
+                <span id="conn-text" class="text-[9px] font-black text-emerald-500 uppercase tracking-tighter">SİSTEM AKTİF</span>
             </div>
         </div>
 
         <!-- Timer -->
-        <div class="glass p-8 rounded-[2rem] text-center bg-gradient-to-b from-zinc-900/50 to-transparent">
-            <p id="timer-label" class="text-[10px] font-black text-zinc-500 uppercase tracking-[0.4em] mb-4">SİSTEM SAATİ</p>
+        <div class="glass p-8 rounded-[2rem] text-center bg-gradient-to-b from-zinc-900/50 to-transparent shadow-2xl shadow-emerald-500/5">
+            <p id="timer-label" class="text-[10px] font-black text-zinc-500 uppercase tracking-[0.4em] mb-4">AÇILIŞ GERİ SAYIM</p>
             <div id="main-timer" class="status-display italic tabular-nums text-zinc-700">00:00:00</div>
         </div>
 
         <!-- Form -->
-        <div id="form-container" class="glass p-6 rounded-[2rem] space-y-6 relative">
-            <div id="voted-block" class="hidden absolute inset-0 z-50 bg-black flex flex-col items-center justify-center p-8 text-center rounded-[2rem]">
-                <h3 class="text-xl font-black italic text-emerald-500">İŞLEM TAMAMLANDI</h3>
-                <p class="text-zinc-500 text-[10px] mt-2 uppercase font-bold">KAYDINIZ ALINDI</p>
+        <div id="form-container" class="glass p-6 rounded-[2rem] space-y-6 relative border-t border-white/10">
+            <div id="voted-block" class="hidden absolute inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-8 text-center rounded-[2rem]">
+                <div class="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mb-4">
+                    <div class="w-8 h-8 bg-emerald-500 rounded-full animate-ping opacity-75"></div>
+                </div>
+                <h3 class="text-xl font-black italic text-emerald-500">KAYDINIZ VAR</h3>
+                <p class="text-zinc-500 text-[10px] mt-2 uppercase font-bold tracking-widest">SİSTEME İŞLENMİŞTİR</p>
             </div>
 
             <div class="space-y-2">
                 <label class="text-[10px] font-black text-zinc-600 uppercase ml-1">Kurye Ad Soyad</label>
-                <input type="text" id="kurye-ad" autocomplete="off" placeholder="ÖR: AHMET YILMAZ" 
-                       class="w-full p-4 rounded-2xl font-bold uppercase text-lg transition-all">
+                <input type="text" id="kurye-ad" autocomplete="off" placeholder="ÖR: MEHMET CAN" 
+                       class="w-full p-4 rounded-2xl font-bold uppercase text-lg transition-all focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/5">
             </div>
             
             <div id="days-list" class="grid grid-cols-1 gap-2">
-                <!-- Günler -->
+                <!-- Günler Dinamik Gelecek -->
             </div>
 
             <button onclick="submitVote()" id="action-btn" 
-                    class="w-full py-5 bg-zinc-900 text-zinc-600 font-black rounded-2xl uppercase text-xs">
+                    class="w-full py-5 bg-zinc-900 text-zinc-600 font-black rounded-2xl uppercase text-xs tracking-widest transition-all">
                 YÜKLENİYOR...
             </button>
         </div>
 
-        <!-- Live List -->
+        <!-- Live List - Categorized -->
         <div class="glass p-5 rounded-[2rem]">
-            <h4 class="text-[10px] font-black text-zinc-600 uppercase mb-4 text-center">CANLI LİSTE</h4>
-            <div id="live-list" class="space-y-2 text-[11px]"></div>
+            <div class="flex items-center justify-center gap-3 mb-6">
+                <div class="h-px bg-zinc-800 flex-1"></div>
+                <h4 class="text-[10px] font-black text-zinc-500 uppercase tracking-widest">GÜNCEL LİSTE</h4>
+                <div class="h-px bg-zinc-800 flex-1"></div>
+            </div>
+            <div id="live-list" class="space-y-4">
+                <!-- Kategorize Liste Buraya -->
+            </div>
         </div>
     </div>
 
     <!-- Admin Panel -->
-    <div id="admin-panel" class="fixed inset-0 bg-black z-[100001] hidden overflow-y-auto p-4">
-        <div class="max-w-4xl mx-auto space-y-6">
-            <div class="glass p-6 rounded-3xl flex justify-between items-center">
-                <h2 class="font-black text-xl italic uppercase">Yönetim</h2>
-                <button onclick="closeAdmin()" class="bg-white text-black px-4 py-2 rounded-xl font-black text-[10px]">KAPAT</button>
+    <div id="admin-panel" class="fixed inset-0 bg-black z-[100001] hidden overflow-y-auto">
+        <div class="min-h-screen p-4 md:p-8">
+            <div class="max-w-4xl mx-auto space-y-6">
+                <div class="glass p-6 rounded-3xl flex justify-between items-center sticky top-0 z-10">
+                    <div>
+                        <h2 class="font-black text-2xl italic uppercase tracking-tighter">Yönetim</h2>
+                        <p class="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">Kontrol Paneli</p>
+                    </div>
+                    <button onclick="closeAdmin()" class="bg-white text-black px-6 py-3 rounded-xl font-black text-[10px] uppercase shadow-xl">PANELİ KAPAT</button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="glass p-6 rounded-3xl space-y-4">
+                        <h3 class="text-xs font-black text-emerald-500 uppercase">GÜNLÜK KOTALAR</h3>
+                        <div id="admin-quotas" class="space-y-2"></div>
+                    </div>
+                    <div class="glass p-6 rounded-3xl space-y-4">
+                        <h3 class="text-xs font-black text-red-500 uppercase">SİSTEM TARİHİ</h3>
+                        <div class="space-y-2">
+                            <label class="text-[9px] font-bold text-zinc-600">ANKET AÇILIŞI (ISO FORMAT)</label>
+                            <input type="text" id="open-date-input" class="w-full p-4 rounded-xl text-xs font-mono" placeholder="2024-05-20T10:00:00">
+                            <button onclick="updateOpenDate()" class="w-full bg-emerald-500/10 text-emerald-500 py-3 rounded-xl font-black text-[10px]">TARİHİ GÜNCELLE</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass rounded-3xl overflow-hidden">
+                    <table class="w-full text-left text-[11px]">
+                        <thead class="bg-zinc-900/50 text-zinc-500 border-b border-white/5 font-black uppercase">
+                            <tr>
+                                <th class="p-4">KURYE</th>
+                                <th class="p-4">SEÇTİĞİ GÜN</th>
+                                <th class="p-4 text-center">İŞLEM</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-table-rows"></tbody>
+                    </table>
+                </div>
             </div>
-            <div class="glass p-4 rounded-3xl overflow-x-auto">
-                <table class="w-full text-left text-[11px]">
-                    <thead class="text-zinc-600 border-b border-white/5">
-                        <tr><th class="p-2">İSİM</th><th class="p-2">GÜN</th><th class="p-2">ZAMAN</th><th class="p-2">AKSİYON</th></tr>
-                    </thead>
-                    <tbody id="admin-table-rows"></tbody>
-                </table>
-            </div>
-            <div class="grid grid-cols-1 gap-2" id="admin-quotas"></div>
         </div>
     </div>
 
@@ -156,69 +194,53 @@
         const GUNLER = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
         
         let state = {
-            config: { quotas: {}, openDate: "" },
+            config: { quotas: {}, openDate: "2024-01-01T00:00:00" },
             votes: [],
             offset: 0,
             selectedDay: null,
-            isConnected: true // Default true to allow UI actions
+            isConnected: true
         };
 
-        // UI Durum Güncellemesi
-        function updateStatus(connected) {
+        // Bağlantı Durumu
+        onValue(ref(rtdb, ".info/connected"), (snap) => {
+            const connected = snap.val() === true;
             state.isConnected = connected;
             const dot = document.getElementById('conn-dot');
             const txt = document.getElementById('conn-text');
-            if(connected) {
-                dot.className = "w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_#10b981]";
-                txt.innerText = "SİSTEM HAZIR";
-                txt.className = "text-[9px] font-black text-emerald-500 uppercase tracking-tighter";
-            } else {
-                dot.className = "w-2 h-2 rounded-full bg-orange-500";
-                txt.innerText = "BAĞLANTI ZAYIF";
-                txt.className = "text-[9px] font-black text-orange-500 uppercase tracking-tighter";
-            }
-        }
-
-        // Realtime Database Bağlantı Kontrolü
-        onValue(ref(rtdb, ".info/connected"), (snap) => {
-            updateStatus(snap.val() === true);
+            dot.className = connected ? "w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_#10b981]" : "w-2 h-2 rounded-full bg-orange-500";
+            txt.innerText = connected ? "SİSTEM AKTİF" : "BAĞLANTI ZAYIF";
         });
 
-        onValue(ref(rtdb, ".info/serverTimeOffset"), (snap) => {
-            state.offset = snap.val() || 0;
-        });
+        onValue(ref(rtdb, ".info/serverTimeOffset"), (snap) => { state.offset = snap.val() || 0; });
 
-        // Firestore Dinleyicileri (Daha Güvenli)
+        // Firestore Realtime Veriler
         onSnapshot(doc(db, "vigo_v66", "config"), (s) => {
             if(s.exists()) {
                 state.config = s.data();
+                document.getElementById('open-date-input').value = state.config.openDate;
                 renderDays();
             }
-        }, (err) => console.log("Config Error:", err));
+        });
 
         onSnapshot(collection(db, "vigo_v66_votes"), (s) => {
             state.votes = s.docs.map(d => d.data()).sort((a,b) => a.ts - b.ts);
             renderDays();
             renderLiveList();
             if(document.getElementById('admin-panel').classList.contains('modal-active')) renderAdmin();
-        }, (err) => console.log("Votes Error:", err));
+        });
 
-        // Seçim Fonksiyonu
         window.selectDay = (gun) => {
             const count = state.votes.filter(v => v.gun === gun).length;
             const max = state.config?.quotas?.[gun] || 10;
-            if(count >= max) return notify("Bu gün dolmuş!");
-            
+            if(count >= max) return notify("Bu günün kontenjanı dolmuştur.");
             state.selectedDay = gun;
             renderDays();
         };
 
         function renderDays() {
             const container = document.getElementById('days-list');
-            if(!container) return;
-
             const now = Date.now() + state.offset;
-            const openTs = state.config?.openDate ? new Date(state.config.openDate).getTime() : 0;
+            const openTs = new Date(state.config.openDate).getTime();
             const isLocked = openTs > now;
 
             container.innerHTML = GUNLER.map(gun => {
@@ -233,46 +255,52 @@
                          ${isSelected ? 'selected border-emerald-500' : 'border-white/5 bg-zinc-900/40'}
                          ${isFull ? 'opacity-30' : 'cursor-pointer'}">
                         <span class="text-[11px] font-black uppercase ${isSelected ? 'text-emerald-500' : 'text-zinc-400'}">${gun}</span>
-                        <span class="text-[10px] font-black tabular-nums text-zinc-500">${count}/${max}</span>
+                        <div class="flex items-center gap-2">
+                            <div class="w-16 h-1 bg-zinc-800 rounded-full overflow-hidden">
+                                <div class="h-full bg-emerald-500 transition-all" style="width: ${(count/max)*100}%"></div>
+                            </div>
+                            <span class="text-[10px] font-black tabular-nums text-zinc-500">${count}/${max}</span>
+                        </div>
                     </div>
                 `;
             }).join('');
         }
 
-        function updateUI() {
-            const now = Date.now() + state.offset;
-            const openTs = state.config?.openDate ? new Date(state.config.openDate).getTime() : 0;
-            const diff = openTs - now;
-            
-            const timerEl = document.getElementById('main-timer');
-            const btnEl = document.getElementById('action-btn');
+        function renderLiveList() {
+            const container = document.getElementById('live-list');
+            let html = '';
 
-            if(diff > 0) {
-                const h = String(Math.floor(diff/3600000)).padStart(2,'0');
-                const m = String(Math.floor((diff%3600000)/60000)).padStart(2,'0');
-                const s = String(Math.floor((diff%60000)/1000)).padStart(2,'0');
-                timerEl.innerText = `${h}:${m}:${s}`;
-                timerEl.className = "status-display italic text-zinc-800";
-                btnEl.disabled = true;
-                btnEl.innerText = "ANKET KAPALI";
-                btnEl.className = "w-full py-5 bg-zinc-900 text-zinc-700 font-black rounded-2xl uppercase text-xs";
-            } else {
-                timerEl.innerText = "ANKET AKTİF";
-                timerEl.className = "status-display italic active-glow";
-                btnEl.disabled = false;
-                btnEl.innerText = "KAYDI TAMAMLA";
-                btnEl.className = "w-full py-5 bg-emerald-500 text-black font-black rounded-2xl uppercase text-xs shadow-lg active:scale-95";
-            }
+            GUNLER.forEach(gun => {
+                const list = state.votes.filter(v => v.gun === gun);
+                const max = state.config?.quotas?.[gun] || 10;
+                
+                if(list.length > 0) {
+                    html += `
+                        <div class="space-y-2">
+                            <div class="flex justify-between items-center px-1">
+                                <span class="text-[10px] font-black text-zinc-400 uppercase tracking-tighter">${gun}</span>
+                                <span class="text-[8px] font-bold text-zinc-600 uppercase">DOLULUK %${Math.round((list.length/max)*100)}</span>
+                            </div>
+                            <div class="flex flex-wrap gap-1.5 p-3 rounded-2xl bg-zinc-900/30 border border-white/5">
+                                ${list.map(v => `
+                                    <div class="bg-zinc-800/80 text-zinc-300 px-3 py-1.5 rounded-lg border border-white/5 flex items-center gap-2">
+                                        <div class="w-1 h-1 rounded-full bg-emerald-500"></div>
+                                        <span class="text-[9px] font-bold uppercase whitespace-nowrap">${v.ad}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+            });
 
-            if(localStorage.getItem('vigo_voted_v75')) {
-                document.getElementById('voted-block').classList.remove('hidden');
-            }
+            container.innerHTML = html || '<p class="text-center py-8 text-zinc-600 text-[9px] font-bold uppercase italic">HENÜZ KAYIT BULUNMUYOR</p>';
         }
 
         window.submitVote = async () => {
             const name = document.getElementById('kurye-ad').value.trim().toUpperCase();
-            if(!name || name.split(' ').length < 2) return notify("Ad Soyad giriniz!");
-            if(!state.selectedDay) return notify("Gün seçiniz!");
+            if(!name || name.split(' ').length < 2) return notify("Lütfen Ad ve Soyadınızı tam giriniz.");
+            if(!state.selectedDay) return notify("Lütfen çalışmak istediğiniz günü seçiniz.");
 
             try {
                 await runTransaction(db, async (t) => {
@@ -282,7 +310,7 @@
                     
                     const count = all.filter(v => v.gun === state.selectedDay).length;
                     const max = state.config?.quotas?.[state.selectedDay] || 10;
-                    if(count >= max) throw "Seçilen gün doldu!";
+                    if(count >= max) throw "Maalesef seçilen gün doldu.";
 
                     const now = Date.now() + state.offset;
                     const timeStr = new Date(now).toLocaleTimeString('tr-TR');
@@ -292,24 +320,12 @@
                     });
                 });
                 localStorage.setItem('vigo_voted_v75', 'true');
-                notify("Kayıt Başarılı", true);
+                notify("Kaydınız başarıyla oluşturuldu.", true);
                 setTimeout(() => location.reload(), 1500);
             } catch(e) { notify(e); }
         };
 
-        function renderLiveList() {
-            document.getElementById('live-list').innerHTML = GUNLER.map(gun => {
-                const list = state.votes.filter(v => v.gun === gun);
-                if(list.length === 0) return '';
-                return `
-                    <div class="p-3 bg-zinc-900/30 rounded-xl border border-white/5">
-                        <div class="flex flex-wrap gap-1">${list.map(v => `<span class="bg-zinc-800 text-zinc-300 px-2 py-1 rounded-md font-bold uppercase text-[9px]">${v.ad}</span>`).join('')}</div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        // Admin İşlemleri
+        // Admin Kontrolleri
         let admC = 0;
         window.countAdminClicks = () => {
             admC++;
@@ -321,7 +337,7 @@
                 document.getElementById('auth-modal').classList.remove('modal-active');
                 document.getElementById('admin-panel').classList.add('modal-active');
                 renderAdmin();
-            } else notify("Şifre Yanlış!");
+            } else notify("Hatalı güvenlik kodu!");
         };
         window.closeAuth = () => document.getElementById('auth-modal').classList.remove('modal-active');
         window.closeAdmin = () => document.getElementById('admin-panel').classList.remove('modal-active');
@@ -329,20 +345,19 @@
         function renderAdmin() {
             const rows = document.getElementById('admin-table-rows');
             rows.innerHTML = state.votes.map(v => `
-                <tr class="border-b border-white/5 text-zinc-400">
-                    <td class="p-3 font-bold text-white uppercase">${v.ad}</td>
-                    <td class="p-3">${v.gun}</td>
-                    <td class="p-3 font-mono text-[9px]">${v.timeMs}</td>
-                    <td class="p-3"><button onclick="deleteVote('${v.ad}')" class="text-red-500 font-black">SİL</button></td>
+                <tr class="border-b border-white/5 hover:bg-zinc-900/40 transition-colors">
+                    <td class="p-4 font-black text-white text-[10px] uppercase">${v.ad}</td>
+                    <td class="p-4 text-emerald-500 font-bold text-[10px] uppercase">${v.gun}</td>
+                    <td class="p-4 text-center"><button onclick="deleteVote('${v.ad}')" class="bg-red-500/10 text-red-500 px-3 py-1 rounded-md font-black text-[9px]">SİL</button></td>
                 </tr>
             `).join('');
 
             const quotas = document.getElementById('admin-quotas');
             quotas.innerHTML = GUNLER.map(gun => `
-                <div class="flex items-center justify-between glass p-4 rounded-xl">
-                    <span class="text-xs font-black uppercase text-zinc-500">${gun}</span>
+                <div class="flex items-center justify-between glass p-4 rounded-2xl border border-white/5">
+                    <span class="text-[10px] font-black uppercase text-zinc-400">${gun}</span>
                     <input type="number" onchange="updateQuota('${gun}', this.value)" value="${state.config?.quotas?.[gun] || 10}" 
-                           class="w-20 p-2 rounded-lg text-center font-bold">
+                           class="w-16 p-2 rounded-xl text-center font-black text-xs">
                 </div>
             `).join('');
         }
@@ -352,7 +367,39 @@
             await setDoc(doc(db, "vigo_v66", "config"), { ...state.config, quotas: newQuotas }, { merge: true });
         };
 
-        window.deleteVote = async (id) => { if(confirm("Kaydı sil?")) await deleteDoc(doc(db, "vigo_v66_votes", id)); };
+        window.updateOpenDate = async () => {
+            const val = document.getElementById('open-date-input').value;
+            await setDoc(doc(db, "vigo_v66", "config"), { ...state.config, openDate: val }, { merge: true });
+            notify("Açılış saati güncellendi.", true);
+        };
+
+        window.deleteVote = async (id) => { if(confirm("Kaydı silmek istediğinize emin misiniz?")) await deleteDoc(doc(db, "vigo_v66_votes", id)); };
+
+        function updateUI() {
+            const now = Date.now() + state.offset;
+            const openTs = new Date(state.config.openDate).getTime();
+            const diff = openTs - now;
+            const timerEl = document.getElementById('main-timer');
+            const btnEl = document.getElementById('action-btn');
+
+            if(diff > 0) {
+                const h = String(Math.floor(diff/3600000)).padStart(2,'0');
+                const m = String(Math.floor((diff%3600000)/60000)).padStart(2,'0');
+                const s = String(Math.floor((diff%60000)/1000)).padStart(2,'0');
+                timerEl.innerText = `${h}:${m}:${s}`;
+                timerEl.className = "status-display italic text-zinc-800";
+                btnEl.disabled = true;
+                btnEl.innerText = "ANKET HENÜZ KAPALI";
+                btnEl.className = "w-full py-5 bg-zinc-900 text-zinc-700 font-black rounded-2xl uppercase text-xs";
+            } else {
+                timerEl.innerText = "SİSTEM AÇIK";
+                timerEl.className = "status-display italic active-glow";
+                btnEl.disabled = false;
+                btnEl.innerText = "KAYDI TAMAMLA";
+                btnEl.className = "w-full py-5 bg-emerald-500 text-black font-black rounded-2xl uppercase text-xs shadow-lg active:scale-95";
+            }
+            if(localStorage.getItem('vigo_voted_v75')) document.getElementById('voted-block').classList.remove('hidden');
+        }
 
         function notify(msg, success = false) {
             const n = document.getElementById('vigo-notify');
