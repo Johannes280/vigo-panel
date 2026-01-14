@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VIGO FORCE v90</title>
+    <title>VIGO FORCE v91</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
@@ -162,7 +162,7 @@
             config: { quotas: {}, openDate: new Date().toISOString() },
             votes: [],
             selected: null,
-            hasVoted: localStorage.getItem('vigo_v90_voted') || null,
+            hasVoted: localStorage.getItem('vigo_v91_voted') || null,
             isOpen: false
         };
 
@@ -174,12 +174,12 @@
         }
 
         // --- VERİ DİNLEME ---
-        onSnapshot(doc(db, "vigo_v90", "config"), (s) => {
+        onSnapshot(doc(db, "vigo_v91", "config"), (s) => {
             if(s.exists()) state.config = s.data();
             updateAll();
         }, (e) => setConn(false));
 
-        onSnapshot(collection(db, "vigo_v90_votes"), (s) => {
+        onSnapshot(collection(db, "vigo_v91_votes"), (s) => {
             state.votes = s.docs.map(d => ({ id: d.id, ...d.data() }));
             updateAll();
         }, (e) => setConn(false));
@@ -197,7 +197,6 @@
             setConn(true);
         }
 
-        // --- GÜN SEÇİM TABLOSU ---
         function renderDaysGrid() {
             const grid = document.getElementById('days-grid');
             grid.innerHTML = GUNLER.map(g => {
@@ -213,7 +212,7 @@
                             ${isFull ? 'opacity-20 grayscale cursor-not-allowed' : 'hover:border-zinc-700'}">
                         <div class="flex flex-col">
                             <span class="font-black text-xs uppercase ${isSelected ? 'text-emerald-400' : 'text-zinc-300'}">${g}</span>
-                            <span class="text-[9px] font-bold text-zinc-600 uppercase tracking-tighter">${isFull ? 'KONTENJAN DOLDU' : 'SEÇİM YAPABİLİRSİNİZ'}</span>
+                            <span class="text-[9px] font-bold text-zinc-600 uppercase tracking-tighter">${isFull ? 'KONTENJAN DOLU' : 'SEÇİM YAPABİLİRSİNİZ'}</span>
                         </div>
                         <span class="mono text-sm font-black ${isFull ? 'text-red-500' : 'text-emerald-500'}">${count} / ${max}</span>
                     </button>
@@ -221,7 +220,6 @@
             }).join('');
         }
 
-        // --- CANLI LİSTE ---
         function renderLiveList() {
             const list = document.getElementById('live-list');
             list.innerHTML = GUNLER.map(g => {
@@ -251,7 +249,6 @@
             btn.className = "w-full py-5 bg-emerald-500 text-black rounded-2xl font-black uppercase text-sm shadow-2xl shadow-emerald-500/20 active:scale-95 transition-all";
         };
 
-        // --- KAYIT GÖNDERME ---
         document.getElementById('submit-btn').onclick = async () => {
             if(!state.isOpen || state.hasVoted) return;
             const nameInput = document.getElementById('user-name');
@@ -263,37 +260,43 @@
             try {
                 const submitBtn = document.getElementById('submit-btn');
                 submitBtn.disabled = true;
-                submitBtn.innerText = "VERİTABANINA YAZILIYOR...";
+                submitBtn.innerText = "İŞLENİYOR...";
 
-                // Mükerrer Kayıt Güvenlik Kontrolü
-                const docRef = doc(db, "vigo_v90_votes", rawName);
+                const docRef = doc(db, "vigo_v91_votes", rawName);
                 const docSnap = await getDoc(docRef);
                 
                 if(docSnap.exists()) {
-                    alert("DİKKAT: Bu isimle daha önce kayıt yapılmış! Çift kayda izin verilmez.");
-                    localStorage.setItem('vigo_v90_voted', docSnap.data().gun);
+                    alert("DİKKAT: Bu isimle daha önce kayıt yapılmış!");
+                    localStorage.setItem('vigo_v91_voted', docSnap.data().gun);
                     location.reload();
                     return;
                 }
+
+                // Milisaniye detaylı zamanı al
+                const now = new Date();
+                const msTime = now.getHours().toString().padStart(2, '0') + ":" + 
+                               now.getMinutes().toString().padStart(2, '0') + ":" + 
+                               now.getSeconds().toString().padStart(2, '0') + "." + 
+                               now.getMilliseconds().toString().padStart(3, '0');
 
                 await setDoc(docRef, { 
                     ad: rawName, 
                     gun: state.selected, 
                     timestamp: serverTimestamp(),
-                    ts_raw: Date.now()
+                    ts_raw: now.getTime(),
+                    ts_readable: msTime // Excel için milisaniye detayı
                 });
 
-                localStorage.setItem('vigo_v90_voted', state.selected);
+                localStorage.setItem('vigo_v91_voted', state.selected);
                 state.hasVoted = state.selected;
                 location.reload();
                 
             } catch (e) {
-                alert("Hata oluştu, lütfen internetinizi kontrol edin.");
+                alert("Hata oluştu.");
                 submitBtn.disabled = false;
             }
         };
 
-        // --- MILISANIYE DETAYLI SAYAÇ DÖNGÜSÜ ---
         function runTimer() {
             const diff = new Date(state.config.openDate).getTime() - Date.now();
             const display = document.getElementById('timer-display');
@@ -310,32 +313,27 @@
                 
                 display.innerHTML = `${h}:${m}:${s}<span class="text-xl text-emerald-500 opacity-50">.${ms}</span>`;
                 nameInp.disabled = true;
-                nameInp.placeholder = "SÜRE BEKLENİYOR...";
                 submitBtn.disabled = true;
             } else {
                 if(!state.isOpen) {
                     state.isOpen = true;
                     nameInp.disabled = false;
                     nameInp.placeholder = "AD SOYAD GİRİNİZ";
-                    if(!state.selected) submitBtn.innerText = "ÖNCE GÜN SEÇİN";
                     timerCard.classList.add('system-open');
                     renderDaysGrid();
                 }
                 display.innerHTML = `<span class="text-emerald-500 italic">SİSTEM AKTİF</span>`;
-                document.getElementById('timer-label').innerText = "KAYITLAR KABUL EDİLİYOR";
             }
             requestAnimationFrame(runTimer);
         }
         requestAnimationFrame(runTimer);
 
-        // --- ADMİN PANELİ ---
         document.getElementById('admin-trigger').onclick = () => toggleModal('auth-modal', true);
         document.getElementById('auth-confirm').onclick = () => {
             if(document.getElementById('admin-pass').value === "vigo44") {
                 toggleModal('auth-modal', false);
                 toggleModal('admin-panel', true);
                 renderAdminPanel();
-                document.getElementById('admin-pass').value = "";
             } else { alert("Şifre Hatalı!"); }
         };
 
@@ -343,16 +341,13 @@
             const body = document.getElementById('panel-body');
             body.innerHTML = `
                 <div class="glass-panel p-6 space-y-4">
-                    <h3 class="text-[10px] font-black text-emerald-500 uppercase">Zamanlayıcı Ayarı</h3>
+                    <h3 class="text-[10px] font-black text-emerald-500 uppercase">Zamanlayıcı</h3>
                     <input type="datetime-local" id="conf-date" class="w-full p-4 bg-black border border-zinc-800 rounded-xl font-bold">
-                    <button id="save-date" class="w-full py-4 bg-emerald-500 text-black font-black rounded-xl text-xs uppercase">Süreyi Güncelle</button>
+                    <button id="save-date" class="w-full py-4 bg-emerald-500 text-black font-black rounded-xl text-xs uppercase">Güncelle</button>
                 </div>
 
                 <div class="glass-panel p-6 space-y-3">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-[10px] font-black text-emerald-500 uppercase">Kontenjanlar</h3>
-                        <span class="text-[10px] text-zinc-500 font-bold">Min: 0 | Max: 50</span>
-                    </div>
+                    <h3 class="text-[10px] font-black text-emerald-500 uppercase mb-4">Kontenjanlar</h3>
                     ${GUNLER.map(g => `
                         <div class="flex justify-between items-center py-2 border-b border-zinc-900">
                             <span class="text-xs font-bold text-zinc-400 uppercase">${g}</span>
@@ -363,52 +358,51 @@
                 </div>
 
                 <div class="grid grid-cols-1 gap-3">
-                    <button id="export-excel" class="w-full py-5 bg-white text-black font-black rounded-2xl text-xs uppercase shadow-xl flex items-center justify-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                        </svg>
-                        Excel Raporu İndir
+                    <button id="export-excel" class="w-full py-5 bg-white text-black font-black rounded-2xl text-xs uppercase flex items-center justify-center gap-2">
+                        Excel Raporu (MS Detaylı)
                     </button>
-                    <button id="reset-system" class="w-full py-4 border border-red-900/50 text-red-500 rounded-2xl font-black text-[10px] uppercase">Sistemi Sıfırla (Kayıtları Sil)</button>
+                    <button id="reset-system" class="w-full py-4 border border-red-900/50 text-red-500 rounded-2xl font-black text-[10px] uppercase">Sıfırla</button>
                 </div>
             `;
 
             document.getElementById('save-date').onclick = async () => {
                 const val = document.getElementById('conf-date').value;
                 if(!val) return;
-                await setDoc(doc(db, "vigo_v90", "config"), { ...state.config, openDate: new Date(val).toISOString() }, { merge: true });
-                alert("Yeni açılış saati tanımlandı.");
+                await setDoc(doc(db, "vigo_v91", "config"), { ...state.config, openDate: new Date(val).toISOString() }, { merge: true });
+                alert("Zaman ayarlandı.");
             };
 
             document.getElementById('export-excel').onclick = () => exportToExcel();
-
             document.getElementById('reset-system').onclick = async () => {
-                if(confirm("TÜM KAYITLAR VE SEÇİMLER SİLİNECEK! Emin misiniz?")) {
-                    const snap = await getDocs(collection(db, "vigo_v90_votes"));
+                if(confirm("Tüm kayıtlar silinsin mi?")) {
+                    const snap = await getDocs(collection(db, "vigo_v91_votes"));
                     await Promise.all(snap.docs.map(d => deleteDoc(d.ref)));
-                    localStorage.removeItem('vigo_v90_voted');
-                    alert("Tüm veriler temizlendi.");
+                    localStorage.removeItem('vigo_v91_voted');
                     location.reload();
                 }
             };
         }
 
         function exportToExcel() {
-            const data = state.votes.map(v => ({
+            // Veriyi kronolojik olarak (en hızlıdan yavaşa) sırala
+            const sortedVotes = [...state.votes].sort((a, b) => (a.ts_raw || 0) - (b.ts_raw || 0));
+
+            const data = sortedVotes.map(v => ({
                 "AD SOYAD": v.ad,
                 "SEÇİLEN GÜN": v.gun,
-                "KAYIT TARİHİ": v.timestamp ? v.timestamp.toDate().toLocaleString('tr-TR') : "Bilinmiyor"
+                "KAYIT TARİHİ": v.timestamp ? v.timestamp.toDate().toLocaleDateString('tr-TR') : "-",
+                "KAYIT ZAMANI (MS DETAY)": v.ts_readable || "-"
             }));
             
             const ws = XLSX.utils.json_to_sheet(data);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Kurye Listesi");
-            XLSX.writeFile(wb, `Vigo_Force_Vardiya_${new Date().toLocaleDateString()}.xlsx`);
+            XLSX.utils.book_append_sheet(wb, ws, "Sıralı Liste");
+            XLSX.writeFile(wb, `Vigo_Force_Rapor_MS_${new Date().toLocaleDateString()}.xlsx`);
         }
 
         window.updateQ = async (g, v) => {
             const quotas = { ...state.config.quotas, [g]: parseInt(v) };
-            await setDoc(doc(db, "vigo_v90", "config"), { ...state.config, quotas }, { merge: true });
+            await setDoc(doc(db, "vigo_v91", "config"), { ...state.config, quotas }, { merge: true });
         };
 
         window.toggleModal = (id, show) => {
