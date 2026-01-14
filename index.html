@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Vigo v80 - Direct Admin Access</title>
+    <title>Vigo v85 - Force Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700;800&family=Plus+Jakarta+Sans:wght@400;700;800&display=swap');
@@ -12,117 +12,99 @@
             font-family: 'Plus Jakarta Sans', sans-serif; 
             background-color: #000; color: #fff; 
             margin: 0; padding: 0;
-            user-select: none; -webkit-tap-highlight-color: transparent;
+            user-select: none;
             touch-action: manipulation;
         }
 
-        .status-display {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: clamp(1.8rem, 8vw, 3.2rem);
-            font-weight: 800;
+        .glass { background: rgba(15, 15, 15, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); }
+        
+        /* En Üst Katman Zorlaması */
+        .force-top {
+            position: fixed !important;
+            z-index: 999999999 !important;
         }
 
-        .glass { background: rgba(15, 15, 15, 0.9); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); }
-        input { background: #0a0a0a !important; color: #fff !important; border: 1px solid #222 !important; outline: none; }
-        .modal-active { display: flex !important; }
         .hidden { display: none !important; }
+        .flex-modal { display: flex !important; }
 
-        /* Yeni Admin Butonu Stili */
-        #direct-admin-btn {
+        input { 
+            background: #000 !important; 
+            color: #fff !important; 
+            border: 1px solid #333 !important;
+            -webkit-appearance: none;
+        }
+
+        #debug-log {
             position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: #050505;
-            border-top: 1px solid #111;
-            padding: 12px;
-            text-align: center;
-            z-index: 999999; /* En üstte */
-            cursor: pointer;
+            top: 5px;
+            left: 5px;
+            font-size: 8px;
+            color: #444;
+            pointer-events: none;
         }
     </style>
 </head>
-<body class="bg-black min-h-screen p-4 pb-24">
+<body class="bg-black text-white">
 
-    <!-- Admin Şifre Ekranı -->
-    <div id="auth-modal" class="fixed inset-0 bg-black/95 z-[1000000] hidden flex-col items-center justify-center p-6 backdrop-blur-2xl">
-        <div class="w-full max-w-xs space-y-6">
-            <div class="text-center">
-                <h2 class="text-2xl font-black italic uppercase tracking-tighter text-white">YÖNETİM GİRİŞİ</h2>
-                <p class="text-[10px] text-zinc-500 mt-2">Güvenlik anahtarını giriniz</p>
-            </div>
-            <input type="password" id="admin-pass" inputmode="numeric" placeholder="••••" class="w-full p-6 rounded-2xl text-center font-black text-3xl tracking-[0.5em]">
-            <div class="grid grid-cols-1 gap-3">
-                <button id="auth-confirm-btn" class="bg-emerald-500 text-black font-black py-5 rounded-2xl text-xs uppercase shadow-[0_0_20px_rgba(16,185,129,0.3)]">GİRİŞ YAP</button>
-                <button onclick="document.getElementById('auth-modal').classList.remove('modal-active')" class="text-zinc-500 font-bold py-2 text-[10px] uppercase">İPTAL</button>
-            </div>
+    <div id="debug-log">v85 - Initializing...</div>
+
+    <!-- ZORLA GİRİŞ BUTONU (SAYFANIN EN ÜSTÜNDE ŞERİT) -->
+    <div id="force-admin-trigger" class="w-full bg-zinc-900/50 p-2 text-center cursor-pointer border-b border-white/5">
+        <span class="text-[9px] font-black text-zinc-600 tracking-widest uppercase">SİSTEM KONTROL NOKTASI</span>
+    </div>
+
+    <!-- ŞİFRE MODALI -->
+    <div id="auth-gate" class="fixed inset-0 bg-black/98 hidden flex-col items-center justify-center p-6 force-top">
+        <div class="w-full max-w-xs space-y-4">
+            <h2 class="text-center font-black text-xl tracking-tighter italic">ADMIN AUTH</h2>
+            <input type="password" id="pass-field" placeholder="ŞİFRE" class="w-full p-5 rounded-2xl text-center text-2xl font-black">
+            <button id="pass-submit" class="w-full py-5 bg-white text-black font-black rounded-2xl">ONAYLA</button>
+            <button onclick="document.getElementById('auth-gate').classList.add('hidden')" class="w-full text-zinc-600 text-[10px] font-bold">KAPAT</button>
         </div>
     </div>
 
-    <!-- ANA UYGULAMA -->
-    <div id="app-container" class="max-w-md mx-auto space-y-5">
-        <div class="flex justify-between items-center px-1">
-            <div class="bg-white text-black font-black italic px-3 py-1 rounded-lg text-lg tracking-tighter">VIGO</div>
-            <div id="conn-pill" class="flex items-center gap-2 bg-zinc-900/50 px-3 py-2 rounded-full">
-                <div id="conn-dot" class="w-2 h-2 rounded-full bg-emerald-500"></div>
-                <span class="text-[9px] font-black text-emerald-500 uppercase">SİSTEM ÇEVRİMİÇİ</span>
-            </div>
+    <!-- YÖNETİM PANELİ -->
+    <div id="admin-view" class="fixed inset-0 bg-black hidden flex-col force-top overflow-y-auto">
+        <div class="p-4 border-b border-white/10 flex justify-between items-center sticky top-0 bg-black z-50">
+            <h1 class="font-black italic">PANEL v85</h1>
+            <button onclick="location.reload()" class="bg-red-500 text-white px-4 py-2 rounded-lg text-xs font-bold">ÇIKIŞ</button>
         </div>
-
-        <!-- Sayaç -->
-        <div class="glass p-8 rounded-[2rem] text-center shadow-2xl">
-            <p class="text-[10px] font-black text-zinc-500 uppercase tracking-[0.4em] mb-4 text-center">AÇILIŞA KALAN</p>
-            <div id="main-timer" class="status-display italic text-zinc-800">00:00:00</div>
-        </div>
-
-        <!-- Form -->
-        <div id="form-container" class="glass p-6 rounded-[2rem] space-y-6 relative overflow-hidden">
-            <div id="voted-block" class="hidden absolute inset-0 z-50 bg-black/95 flex flex-col items-center justify-center text-center">
-                <h3 class="text-xl font-black text-emerald-500">KAYDINIZ TAMAM</h3>
+        <div class="p-6 space-y-6">
+            <div id="admin-content" class="space-y-4">
+                <!-- İçerik JS ile dolacak -->
+                <p class="text-zinc-500 text-center">Yükleniyor...</p>
             </div>
-            <div class="space-y-2">
-                <label class="text-[10px] font-black text-zinc-600 uppercase">Ad Soyad</label>
-                <input type="text" id="kurye-ad" placeholder="ÖR: AHMET YILMAZ" class="w-full p-5 rounded-2xl font-bold uppercase text-lg">
+            <div class="p-4 glass rounded-2xl">
+                <p class="text-[10px] font-bold text-zinc-500 mb-2 uppercase">Açılış Zamanı</p>
+                <input type="datetime-local" id="open-date-input" class="w-full p-3 rounded-xl mb-2">
+                <button id="save-date" class="w-full bg-blue-600 py-3 rounded-xl font-bold">KAYDET</button>
             </div>
-            <div id="days-list" class="grid grid-cols-1 gap-2"></div>
-            <button id="action-btn" class="w-full py-5 bg-zinc-900 text-zinc-600 font-black rounded-2xl uppercase text-xs">BEKLENİYOR...</button>
-        </div>
-
-        <!-- Liste -->
-        <div class="glass p-5 rounded-[2rem]">
-            <div id="live-list" class="space-y-4"></div>
+            <button id="wipe-data" class="w-full py-4 border border-red-500/30 text-red-500 rounded-2xl text-[10px] font-black">TÜM LİSTEYİ SIFIRLA</button>
         </div>
     </div>
 
-    <!-- Yeni Sabit Admin Butonu (En Altta) -->
-    <div id="direct-admin-btn">
-        <span class="text-[9px] font-black text-zinc-700 uppercase tracking-[0.3em]">SİSTEM DURUMU: AKTİF (v80)</span>
-    </div>
+    <!-- ANA EKRAN -->
+    <div class="p-4 max-w-md mx-auto space-y-6">
+        <div class="text-center py-10 glass rounded-[2.5rem]">
+            <p class="text-[10px] font-black tracking-[0.5em] text-zinc-600 mb-2">COUNTDOWN</p>
+            <div id="timer-display" class="text-5xl font-black italic tracking-tighter">00:00:00</div>
+        </div>
 
-    <!-- Admin Panel -->
-    <div id="admin-panel" class="fixed inset-0 bg-black z-[2000000] hidden flex-col">
-        <div class="p-4 glass flex justify-between items-center">
-            <h2 class="font-black text-xl italic uppercase">YÖNETİM</h2>
-            <button onclick="document.getElementById('admin-panel').classList.remove('modal-active')" class="bg-red-500/10 text-red-500 px-4 py-2 rounded-xl text-[10px] font-black">KAPAT</button>
+        <div class="glass p-6 rounded-[2.5rem] space-y-4">
+            <input type="text" id="user-name" placeholder="ADINIZ SOYADINIZ" class="w-full p-5 rounded-2xl font-bold uppercase">
+            <div id="days-grid" class="grid grid-cols-1 gap-2"></div>
+            <button id="submit-vote" class="w-full py-5 bg-zinc-800 text-zinc-500 rounded-2xl font-black uppercase text-xs">GÜN SEÇİN</button>
         </div>
-        <div class="flex-1 overflow-y-auto p-4 space-y-6">
-            <div id="admin-quotas" class="space-y-2"></div>
-            <div class="glass p-4 rounded-2xl space-y-2">
-                <p class="text-[10px] font-black text-zinc-500">SİSTEM AÇILIŞI</p>
-                <input type="datetime-local" id="open-date-input" class="w-full p-4 rounded-xl bg-black border border-white/10">
-                <button id="update-date-btn" class="w-full bg-blue-600 py-3 rounded-xl font-black text-[10px]">GÜNCELLE</button>
-            </div>
-            <div class="glass rounded-2xl overflow-hidden">
-                <table class="w-full text-left text-[10px]"><tbody id="admin-table-rows"></tbody></table>
-            </div>
-            <button onclick="window.clearAll()" class="w-full py-3 text-red-500 font-bold text-[10px]">TÜM LİSTEYİ SİL</button>
-        </div>
+
+        <div id="public-list" class="space-y-3"></div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getFirestore, doc, onSnapshot, setDoc, collection, getDocs, deleteDoc, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, setDoc, collection, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+        const log = (msg) => { document.getElementById('debug-log').innerText = msg; console.log(msg); };
+        
         const firebaseConfig = {
             apiKey: "AIzaSyBsm4DNTCY681X1foMbx-79YfDqcMXTAcg",
             authDomain: "vigoanketler.firebaseapp.com",
@@ -135,127 +117,174 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const GUNLER = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
-        let state = { config: { quotas: {}, openDate: "2024-01-01T00:00:00" }, votes: [], selectedDay: null };
+        
+        let state = {
+            config: { quotas: {}, openDate: new Date().toISOString() },
+            votes: [],
+            selectedDay: null
+        };
 
-        // YENİ GİRİŞ MANTIĞI
-        document.getElementById('direct-admin-btn').addEventListener('click', () => {
-            document.getElementById('auth-modal').classList.add('modal-active');
+        // --- GİRİŞ MANTIĞI (FORCE) ---
+        const trigger = document.getElementById('force-admin-trigger');
+        const authGate = document.getElementById('auth-gate');
+        
+        // Tıklama ile giriş
+        trigger.addEventListener('click', () => {
+            log("Trigger clicked");
+            authGate.classList.remove('hidden');
+            authGate.classList.add('flex-modal');
         });
 
-        document.getElementById('auth-confirm-btn').addEventListener('click', () => {
-            if(document.getElementById('admin-pass').value === "vigo44") {
-                document.getElementById('auth-modal').classList.remove('modal-active');
-                document.getElementById('admin-panel').classList.add('modal-active');
+        // URL ile giriş (Eğer buton çalışmazsa: index.html?admin=true)
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('admin')) {
+            log("URL Param Admin active");
+            authGate.classList.remove('hidden');
+            authGate.classList.add('flex-modal');
+        }
+
+        document.getElementById('pass-submit').addEventListener('click', () => {
+            if(document.getElementById('pass-field').value === "vigo44") {
+                authGate.classList.add('hidden');
+                document.getElementById('admin-view').classList.remove('hidden');
+                document.getElementById('admin-view').classList.add('flex-modal');
                 renderAdmin();
-            } else {
-                document.getElementById('admin-pass').value = "";
             }
         });
 
-        // VERİ ÇEKME
-        onSnapshot(doc(db, "vigo_v66", "config"), (s) => { if(s.exists()) { state.config = s.data(); renderDays(); } });
+        // --- DATA LOAD ---
+        onSnapshot(doc(db, "vigo_v66", "config"), (s) => {
+            if(s.exists()) state.config = s.data();
+            renderDays();
+        });
+
         onSnapshot(collection(db, "vigo_v66_votes"), (s) => {
             state.votes = s.docs.map(d => d.data());
             renderDays();
-            renderLiveList();
-            if(document.getElementById('admin-panel').classList.contains('modal-active')) renderAdmin();
+            renderPublicList();
+            if(!document.getElementById('admin-view').classList.contains('hidden')) renderAdmin();
         });
 
         function renderDays() {
-            const container = document.getElementById('days-list');
-            const openTs = new Date(state.config.openDate).getTime();
-            const isLocked = openTs > Date.now();
+            const container = document.getElementById('days-grid');
+            const openTime = new Date(state.config.openDate).getTime();
+            const isLocked = openTime > Date.now();
 
-            container.innerHTML = GUNLER.map(gun => {
-                const count = state.votes.filter(v => v.gun === gun).length;
-                const max = state.config.quotas?.[gun] || 10;
-                const isSelected = state.selectedDay === gun;
+            container.innerHTML = GUNLER.map(g => {
+                const count = state.votes.filter(v => v.gun === g).length;
+                const max = state.config.quotas?.[g] || 10;
+                const active = state.selectedDay === g;
+                const full = count >= max;
+
                 return `
-                    <div onclick="${isLocked || count >= max ? '' : `window.sd('${gun}')`}" 
-                         class="p-4 rounded-2xl border-2 flex justify-between items-center 
-                         ${isSelected ? 'border-emerald-500 bg-emerald-500/10' : 'border-white/5 bg-zinc-900/40'}
-                         ${count >= max ? 'opacity-30' : 'cursor-pointer'}">
-                        <span class="text-[11px] font-black uppercase">${gun}</span>
-                        <span class="text-xs font-black italic">${count} / ${max}</span>
+                    <div onclick="${isLocked || full ? '' : `window.selectDay('${g}')`}" 
+                         class="p-4 rounded-2xl border-2 flex justify-between items-center transition-all
+                         ${active ? 'border-emerald-500 bg-emerald-500/10' : 'border-white/5 bg-zinc-900/50'}
+                         ${full ? 'opacity-20' : 'cursor-pointer'}">
+                        <span class="font-bold text-xs uppercase">${g}</span>
+                        <span class="text-[10px] font-black">${count} / ${max}</span>
                     </div>
                 `;
             }).join('');
         }
 
-        window.sd = (g) => { state.selectedDay = g; renderDays(); };
+        window.selectDay = (g) => { state.selectedDay = g; renderDays(); };
 
-        document.getElementById('action-btn').addEventListener('click', async () => {
-            const ad = document.getElementById('kurye-ad').value.trim().toUpperCase();
-            if(ad.length < 5 || !state.selectedDay) return;
-            try {
-                await setDoc(doc(db, "vigo_v66_votes", ad), { ad, gun: state.selectedDay, ts: Date.now() });
-                localStorage.setItem('vigo_voted_v80', 'true');
-            } catch(e) { console.error(e); }
+        document.getElementById('submit-vote').addEventListener('click', async () => {
+            const name = document.getElementById('user-name').value.trim().toUpperCase();
+            if(name.length < 5 || !state.selectedDay) return;
+            await setDoc(doc(db, "vigo_v66_votes", name), { ad: name, gun: state.selectedDay, ts: Date.now() });
+            localStorage.setItem('vigo_voted_v85', 'true');
         });
 
-        function renderLiveList() {
-            const container = document.getElementById('live-list');
-            container.innerHTML = GUNLER.map(gun => {
-                const list = state.votes.filter(v => v.gun === gun);
-                if(list.length === 0) return '';
-                return `<div class="p-3 bg-zinc-900/30 rounded-xl border border-white/5">
-                    <p class="text-[8px] font-black text-zinc-500 uppercase mb-2">${gun}</p>
-                    <div class="flex flex-wrap gap-1">${list.map(v => `<span class="bg-zinc-800 text-[8px] px-2 py-1 rounded-md font-bold uppercase">${v.ad}</span>`).join('')}</div>
-                </div>`;
+        function renderPublicList() {
+            const container = document.getElementById('public-list');
+            container.innerHTML = GUNLER.map(g => {
+                const items = state.votes.filter(v => v.gun === g);
+                if(items.length === 0) return '';
+                return `
+                    <div class="glass p-4 rounded-2xl">
+                        <p class="text-[9px] font-black text-zinc-500 mb-2">${g}</p>
+                        <div class="flex flex-wrap gap-1">
+                            ${items.map(i => `<span class="bg-white/5 px-2 py-1 rounded text-[9px] uppercase">${i.ad}</span>`).join('')}
+                        </div>
+                    </div>
+                `;
             }).join('');
         }
 
         function renderAdmin() {
-            document.getElementById('admin-table-rows').innerHTML = state.votes.map(v => `
-                <tr class="border-b border-white/5">
-                    <td class="p-3 uppercase font-bold text-zinc-300">${v.ad}</td>
-                    <td class="p-3 text-emerald-500 font-black uppercase">${v.gun}</td>
-                    <td class="p-3 text-right"><button onclick="window.delV('${v.ad}')" class="text-red-500">SİL</button></td>
-                </tr>
-            `).join('');
-            document.getElementById('admin-quotas').innerHTML = GUNLER.map(gun => `
-                <div class="flex justify-between items-center glass p-3 rounded-xl">
-                    <span class="text-[10px] font-black uppercase">${gun}</span>
-                    <input type="number" onchange="window.updQ('${gun}', this.value)" value="${state.config.quotas[gun]||10}" class="w-12 text-center bg-black border border-zinc-800 text-emerald-500 font-black">
+            const content = document.getElementById('admin-content');
+            content.innerHTML = `
+                <div class="space-y-2">
+                    <p class="text-[10px] font-bold text-zinc-500">KONTENJANLAR</p>
+                    ${GUNLER.map(g => `
+                        <div class="flex justify-between items-center bg-zinc-900 p-3 rounded-xl">
+                            <span class="text-[10px] uppercase">${g}</span>
+                            <input type="number" onchange="window.updateQuota('${g}', this.value)" value="${state.config.quotas[g]||10}" class="w-12 text-center font-bold bg-black rounded">
+                        </div>
+                    `).join('')}
                 </div>
-            `).join('');
+                <div class="space-y-2 mt-6">
+                    <p class="text-[10px] font-bold text-zinc-500 uppercase">Kayıtlı Kişiler (${state.votes.length})</p>
+                    ${state.votes.map(v => `
+                        <div class="flex justify-between items-center glass p-3 rounded-xl">
+                            <span class="text-[10px] font-bold uppercase">${v.ad} -> ${v.gun}</span>
+                            <button onclick="window.delEntry('${v.ad}')" class="text-red-500 font-bold text-[10px]">SİL</button>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
         }
 
-        window.delV = async (id) => { if(confirm("SİL?")) await deleteDoc(doc(db, "vigo_v66_votes", id)); };
-        window.updQ = async (g, v) => {
-            const quotas = { ...state.config.quotas, [g]: parseInt(v) };
+        window.updateQuota = async (g, val) => {
+            const quotas = { ...state.config.quotas, [g]: parseInt(val) };
             await setDoc(doc(db, "vigo_v66", "config"), { ...state.config, quotas }, { merge: true });
         };
-        window.clearAll = async () => {
-            if(confirm("HEPSİ SİLİNSİN Mİ?")) {
-                const snap = await getDocs(collection(db, "vigo_v66_votes"));
-                snap.docs.forEach(d => deleteDoc(d.ref));
-            }
+
+        window.delEntry = async (id) => {
+            if(confirm('Silinsin mi?')) await deleteDoc(doc(db, "vigo_v66_votes", id));
         };
 
+        document.getElementById('save-date').addEventListener('click', async () => {
+            const val = document.getElementById('open-date-input').value;
+            if(!val) return;
+            await setDoc(doc(db, "vigo_v66", "config"), { ...state.config, openDate: new Date(val).toISOString() }, { merge: true });
+            alert("Zaman güncellendi");
+        });
+
+        document.getElementById('wipe-data').addEventListener('click', async () => {
+            if(confirm("DİKKAT: Tüm listeyi silmek üzeresiniz!")) {
+                const snap = await getDocs(collection(db, "vigo_v66_votes"));
+                for (const d of snap.docs) { await deleteDoc(d.ref); }
+                alert("Liste temizlendi");
+            }
+        });
+
+        // Sayaç Döngüsü
         setInterval(() => {
-            const now = Date.now();
-            const openTs = new Date(state.config.openDate).getTime();
-            const diff = openTs - now;
-            const timerEl = document.getElementById('main-timer');
-            const btnEl = document.getElementById('action-btn');
+            const diff = new Date(state.config.openDate).getTime() - Date.now();
+            const display = document.getElementById('timer-display');
+            const btn = document.getElementById('submit-vote');
 
             if(diff > 0) {
                 const h = String(Math.floor(diff/3600000)).padStart(2,'0');
                 const m = String(Math.floor((diff%3600000)/60000)).padStart(2,'0');
                 const s = String(Math.floor((diff%60000)/1000)).padStart(2,'0');
-                timerEl.innerText = `${h}:${m}:${s}`;
-                btnEl.disabled = true;
-                btnEl.innerText = "KAPALI";
+                display.innerText = `${h}:${m}:${s}`;
+                display.classList.remove('text-emerald-500');
+                btn.disabled = true;
+                btn.innerText = "SİSTEM KAPALI";
+                btn.className = "w-full py-5 bg-zinc-900 text-zinc-700 rounded-2xl font-black";
             } else {
-                timerEl.innerText = "AÇIK";
-                timerEl.className = "status-display italic text-emerald-500";
-                btnEl.disabled = false;
-                btnEl.innerText = "KAYDET";
-                btnEl.className = "w-full py-5 bg-emerald-500 text-black font-black rounded-2xl";
+                display.innerText = "AÇIK";
+                display.classList.add('text-emerald-500');
+                btn.disabled = false;
+                btn.innerText = state.selectedDay ? "KAYDI TAMAMLA" : "GÜN SEÇİN";
+                btn.className = state.selectedDay ? "w-full py-5 bg-emerald-500 text-black rounded-2xl font-black" : "w-full py-5 bg-zinc-800 text-zinc-500 rounded-2xl font-black";
             }
-            if(localStorage.getItem('vigo_voted_v80')) document.getElementById('voted-block').classList.remove('hidden');
         }, 1000);
+
     </script>
 </body>
 </html>
