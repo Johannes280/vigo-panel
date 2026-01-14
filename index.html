@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Vigo v77 - Admin Fixed</title>
+    <title>Vigo v78 - Terminal Fix</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700;800&family=Plus+Jakarta+Sans:wght@400;700;800&display=swap');
@@ -24,20 +24,8 @@
         }
 
         .glass { background: rgba(15, 15, 15, 0.9); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); }
-        
         input { background: #0a0a0a !important; color: #fff !important; border: 1px solid #222 !important; outline: none; }
-        
-        .day-card { transition: all 0.2s ease; border-width: 2px; }
-        .day-card.selected { border-color: #10b981 !important; background: rgba(16, 185, 129, 0.1) !important; }
-
-        .active-glow {
-            color: #10b981;
-            text-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
-            animation: pulse-glow 2s infinite;
-        }
-
-        @keyframes pulse-glow { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
-        
+        .active-glow { color: #10b981; text-shadow: 0 0 20px rgba(16, 185, 129, 0.4); }
         .modal-active { display: flex !important; }
         .hidden { display: none !important; }
     </style>
@@ -56,35 +44,34 @@
         <div class="w-full max-w-xs space-y-6">
             <div class="text-center">
                 <h2 class="text-3xl font-black italic uppercase tracking-tighter text-emerald-500">GÜVENLİK</h2>
-                <p class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">Yönetici Girişi</p>
+                <p class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">Yönetici Şifresi</p>
             </div>
             <input type="password" id="admin-pass" placeholder="••••" class="w-full p-6 rounded-2xl text-center font-black text-2xl tracking-[0.5em]">
             <div class="grid grid-cols-1 gap-3">
-                <button id="auth-confirm-btn" class="bg-emerald-500 text-black font-black py-5 rounded-2xl text-xs uppercase shadow-[0_0_20px_rgba(16,185,129,0.3)]">GİRİŞ YAP</button>
-                <button onclick="document.getElementById('auth-modal').classList.remove('modal-active')" class="bg-zinc-800 text-white font-bold py-4 rounded-2xl text-[10px] uppercase">İPTAL</button>
+                <button id="auth-confirm-btn" class="bg-emerald-500 text-black font-black py-5 rounded-2xl text-xs uppercase">GİRİŞ YAP</button>
+                <button onclick="document.getElementById('auth-modal').classList.remove('modal-active')" class="bg-zinc-800 text-white font-bold py-4 rounded-2xl text-[10px] uppercase">KAPAT</button>
             </div>
         </div>
     </div>
 
     <div id="app-container" class="max-w-md mx-auto space-y-5">
-        
         <!-- Header -->
         <div class="flex justify-between items-center px-1">
-            <div id="admin-trigger" class="flex items-center gap-2 cursor-pointer transition-transform active:scale-90 p-2">
+            <div id="admin-trigger" class="flex items-center gap-2 cursor-pointer p-2 rounded-xl active:bg-zinc-900 transition-colors">
                 <div class="bg-white text-black font-black italic px-3 py-1 rounded-lg text-lg tracking-tighter">VIGO</div>
                 <div class="flex flex-col">
-                    <span class="text-[10px] font-black text-emerald-500 leading-none uppercase">Categorized</span>
-                    <span class="text-[8px] font-bold text-zinc-600">v77.0.0</span>
+                    <span class="text-[10px] font-black text-emerald-500 leading-none uppercase">Admin Fix</span>
+                    <span class="text-[8px] font-bold text-zinc-600">v78.0.0</span>
                 </div>
             </div>
             <div id="conn-pill" class="flex items-center gap-2 bg-zinc-900/50 px-3 py-2 rounded-full border border-white/5">
-                <div id="conn-dot" class="w-2 h-2 rounded-full bg-emerald-500"></div>
-                <span id="conn-text" class="text-[9px] font-black text-emerald-500 uppercase tracking-tighter">AKTİF</span>
+                <div id="conn-dot" class="w-2 h-2 rounded-full bg-zinc-600"></div>
+                <span id="conn-text" class="text-[9px] font-black text-zinc-500 uppercase tracking-tighter">BAĞLANIYOR...</span>
             </div>
         </div>
 
         <!-- Timer -->
-        <div class="glass p-8 rounded-[2rem] text-center shadow-2xl shadow-emerald-500/5">
+        <div class="glass p-8 rounded-[2rem] text-center shadow-2xl">
             <p id="timer-label" class="text-[10px] font-black text-zinc-500 uppercase tracking-[0.4em] mb-4">AÇILIŞA KALAN</p>
             <div id="main-timer" class="status-display italic tabular-nums text-zinc-800">00:00:00</div>
         </div>
@@ -92,82 +79,53 @@
         <!-- Form -->
         <div id="form-container" class="glass p-6 rounded-[2rem] space-y-6 relative border-t border-white/10">
             <div id="voted-block" class="hidden absolute inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-8 text-center rounded-[2rem]">
-                <div class="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mb-4">
-                    <div class="w-10 h-10 bg-emerald-500 rounded-full animate-pulse"></div>
-                </div>
                 <h3 class="text-xl font-black italic text-emerald-500">KAYDINIZ ALINDI</h3>
                 <p class="text-zinc-500 text-[10px] mt-2 uppercase font-bold tracking-widest">TEŞEKKÜRLER</p>
             </div>
 
             <div class="space-y-2">
                 <label class="text-[10px] font-black text-zinc-600 uppercase ml-1">Kurye Ad Soyad</label>
-                <input type="text" id="kurye-ad" autocomplete="off" placeholder="AD SOYAD GİRİNİZ" 
-                       class="w-full p-5 rounded-2xl font-bold uppercase text-lg">
+                <input type="text" id="kurye-ad" autocomplete="off" placeholder="AD SOYAD" class="w-full p-5 rounded-2xl font-bold uppercase text-lg">
             </div>
             
-            <div id="days-list" class="grid grid-cols-1 gap-2">
-                <!-- Days will be here -->
-            </div>
+            <div id="days-list" class="grid grid-cols-1 gap-2"></div>
 
-            <button id="action-btn" class="w-full py-5 bg-zinc-900 text-zinc-600 font-black rounded-2xl uppercase text-xs tracking-widest">
-                LÜTFEN BEKLEYİN...
+            <button id="action-btn" disabled class="w-full py-5 bg-zinc-900 text-zinc-600 font-black rounded-2xl uppercase text-xs">
+                SİSTEM YÜKLENİYOR...
             </button>
         </div>
 
-        <!-- Categorized Live List -->
+        <!-- Categorized List -->
         <div class="glass p-5 rounded-[2rem]">
-            <div class="flex items-center justify-center gap-3 mb-6">
-                <div class="h-px bg-zinc-800 flex-1"></div>
-                <h4 class="text-[10px] font-black text-zinc-500 uppercase tracking-widest">KATEGORİZE LİSTE</h4>
-                <div class="h-px bg-zinc-800 flex-1"></div>
-            </div>
-            <div id="live-list" class="space-y-6">
-                <!-- Categorized list will be here -->
-            </div>
+            <h4 class="text-[10px] font-black text-zinc-500 uppercase tracking-widest text-center mb-4">GÜNCEL LİSTE</h4>
+            <div id="live-list" class="space-y-6"></div>
         </div>
     </div>
 
     <!-- Admin Panel -->
-    <div id="admin-panel" class="fixed inset-0 bg-black z-[160000] hidden overflow-y-auto">
-        <div class="min-h-screen p-4">
-            <div class="max-w-4xl mx-auto space-y-6">
-                <div class="glass p-6 rounded-3xl flex justify-between items-center sticky top-0 z-50">
-                    <div>
-                        <h2 class="font-black text-2xl italic uppercase tracking-tighter">ADMIN</h2>
-                        <p class="text-[9px] text-zinc-500 font-bold uppercase">SİSTEM YÖNETİMİ</p>
-                    </div>
-                    <button onclick="document.getElementById('admin-panel').classList.remove('modal-active')" class="bg-white text-black px-6 py-3 rounded-xl font-black text-[10px] uppercase">KAPAT</button>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="glass p-6 rounded-3xl space-y-4">
-                        <h3 class="text-xs font-black text-emerald-500 uppercase">KONTENJAN AYARLARI</h3>
-                        <div id="admin-quotas" class="space-y-2"></div>
-                    </div>
-                    <div class="glass p-6 rounded-3xl space-y-4">
-                        <h3 class="text-xs font-black text-blue-500 uppercase">AÇILIŞ ZAMANI</h3>
-                        <div class="space-y-2">
-                            <input type="text" id="open-date-input" class="w-full p-4 rounded-xl text-xs font-mono" placeholder="YYYY-MM-DDTHH:MM:SS">
-                            <button id="update-date-btn" class="w-full bg-emerald-500 text-black py-3 rounded-xl font-black text-[10px]">GÜNCELLE</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="glass rounded-3xl overflow-hidden shadow-2xl">
-                    <div class="p-4 bg-zinc-900/50 border-b border-white/5 font-black text-[10px] uppercase text-zinc-500">Tüm Kayıtlar</div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-[11px]">
-                            <tbody id="admin-table-rows"></tbody>
-                        </table>
-                    </div>
-                </div>
+    <div id="admin-panel" class="fixed inset-0 bg-black z-[160000] hidden flex-col">
+        <div class="p-4 glass flex justify-between items-center">
+            <h2 class="font-black text-xl italic uppercase">PANEL</h2>
+            <button onclick="document.getElementById('admin-panel').classList.remove('modal-active')" class="bg-red-500 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase">KAPAT</button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-4 space-y-4">
+            <div id="admin-quotas" class="grid grid-cols-1 gap-2"></div>
+            <div class="glass p-4 rounded-2xl space-y-3">
+                <p class="text-[10px] font-black text-zinc-500">AÇILIŞ ZAMANI (ISO Format)</p>
+                <input type="text" id="open-date-input" class="w-full p-3 rounded-lg text-xs">
+                <button id="update-date-btn" class="w-full bg-blue-500 py-3 rounded-xl font-black text-[10px]">GÜNCELLE</button>
+            </div>
+            <div class="glass rounded-2xl overflow-hidden">
+                <table class="w-full text-[10px]">
+                    <tbody id="admin-table-rows"></tbody>
+                </table>
             </div>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, doc, onSnapshot, setDoc, collection, getDocs, deleteDoc, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, setDoc, collection, getDocs, deleteDoc, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         const firebaseConfig = {
@@ -192,42 +150,56 @@
             selectedDay: null
         };
 
-        // --- Admin Tetikleyici ---
-        let clickCount = 0;
-        document.getElementById('admin-trigger').addEventListener('click', () => {
-            clickCount++;
-            if (clickCount >= 5) {
+        // --- Admin Açma Mekanizması (MOBİL UYUMLU) ---
+        let adminClicks = 0;
+        const trigger = document.getElementById('admin-trigger');
+        const openAdminAuth = (e) => {
+            e.preventDefault();
+            adminClicks++;
+            if (adminClicks >= 5) {
                 document.getElementById('auth-modal').classList.add('modal-active');
-                clickCount = 0;
-                document.getElementById('admin-pass').focus();
+                adminClicks = 0;
             }
-            setTimeout(() => clickCount = 0, 2000);
-        });
+            setTimeout(() => adminClicks = 0, 2000);
+        };
+        
+        trigger.addEventListener('touchstart', openAdminAuth);
+        trigger.addEventListener('click', openAdminAuth);
 
-        document.getElementById('auth-confirm-btn').addEventListener('click', handleAuth);
-        document.getElementById('admin-pass').addEventListener('keypress', (e) => { if(e.key === 'Enter') handleAuth(); });
-
-        function handleAuth() {
-            const pass = document.getElementById('admin-pass').value;
-            if(pass === "vigo44") {
+        const handleAuth = () => {
+            if(document.getElementById('admin-pass').value === "vigo44") {
                 document.getElementById('auth-modal').classList.remove('modal-active');
                 document.getElementById('admin-panel').classList.add('modal-active');
-                document.getElementById('admin-pass').value = "";
                 renderAdmin();
-            } else {
-                notify("Hatalı Kod!");
-            }
-        }
+            } else notify("Hatalı Kod!");
+        };
+        document.getElementById('auth-confirm-btn').addEventListener('click', handleAuth);
 
-        // --- Firebase Core ---
+        // --- Bağlantı ve Zaman Yönetimi ---
+        const updateConn = (status) => {
+            const dot = document.getElementById('conn-dot');
+            const txt = document.getElementById('conn-text');
+            if(status === 'ok') {
+                dot.className = "w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]";
+                txt.innerText = "AKTİF";
+                txt.className = "text-[9px] font-black text-emerald-500 uppercase tracking-tighter";
+            } else {
+                dot.className = "w-2 h-2 rounded-full bg-red-500 animate-pulse";
+                txt.innerText = "KOPUK";
+                txt.className = "text-[9px] font-black text-red-500 uppercase tracking-tighter";
+            }
+        };
+
         onValue(ref(rtdb, ".info/connected"), (snap) => {
-            const connected = snap.val() === true;
-            document.getElementById('conn-dot').className = connected ? "w-2 h-2 rounded-full bg-emerald-500" : "w-2 h-2 rounded-full bg-red-500";
-            document.getElementById('conn-text').innerText = connected ? "AKTİF" : "KOPUK";
+            if(snap.val() === true) {
+                updateConn('ok');
+                onValue(ref(rtdb, ".info/serverTimeOffset"), s => state.offset = s.val() || 0);
+            } else {
+                updateConn('error');
+            }
         });
 
-        onValue(ref(rtdb, ".info/serverTimeOffset"), (snap) => { state.offset = snap.val() || 0; });
-
+        // --- Veri Dinleme ---
         onSnapshot(doc(db, "vigo_v66", "config"), (s) => {
             if(s.exists()) {
                 state.config = s.data();
@@ -243,11 +215,11 @@
             if(document.getElementById('admin-panel').classList.contains('modal-active')) renderAdmin();
         });
 
-        // --- Fonksiyonlar ---
+        // --- UI İşlemleri ---
         window.selectDay = (gun) => {
             const count = state.votes.filter(v => v.gun === gun).length;
             const max = state.config?.quotas?.[gun] || 10;
-            if(count >= max) return notify("Bu günün kontenjanı dolmuştur.");
+            if(count >= max) return notify("Kontenjan Dolu");
             state.selectedDay = gun;
             renderDays();
         };
@@ -263,19 +235,13 @@
                 const max = state.config?.quotas?.[gun] || 10;
                 const isSelected = state.selectedDay === gun;
                 const isFull = count >= max;
-
                 return `
                     <div onclick="${isLocked || isFull ? '' : `selectDay('${gun}')`}" 
-                         class="day-card flex items-center justify-between p-5 rounded-2xl border-2 
-                         ${isSelected ? 'selected border-emerald-500' : 'border-white/5 bg-zinc-900/40'}
-                         ${isFull ? 'opacity-30' : 'cursor-pointer'}">
-                        <span class="text-[11px] font-black uppercase ${isSelected ? 'text-emerald-500' : 'text-zinc-400'}">${gun}</span>
-                        <div class="flex items-center gap-3">
-                            <div class="w-16 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
-                                <div class="h-full bg-emerald-500 transition-all" style="width: ${(count/max)*100}%"></div>
-                            </div>
-                            <span class="text-[10px] font-black tabular-nums text-zinc-500">${count}/${max}</span>
-                        </div>
+                         class="p-4 rounded-xl border-2 transition-all flex justify-between items-center
+                         ${isSelected ? 'border-emerald-500 bg-emerald-500/10' : 'border-white/5 bg-zinc-900/40'}
+                         ${isFull ? 'opacity-30 grayscale' : 'cursor-pointer'}">
+                        <span class="text-[11px] font-black uppercase">${gun}</span>
+                        <span class="text-[10px] font-mono">${count}/${max}</span>
                     </div>
                 `;
             }).join('');
@@ -283,89 +249,69 @@
 
         function renderLiveList() {
             const container = document.getElementById('live-list');
-            let html = '';
-
-            GUNLER.forEach(gun => {
+            container.innerHTML = GUNLER.map(gun => {
                 const list = state.votes.filter(v => v.gun === gun);
-                if(list.length > 0) {
-                    html += `
-                        <div class="space-y-3">
-                            <div class="flex items-center gap-2 px-1">
-                                <div class="w-1 h-3 bg-emerald-500 rounded-full"></div>
-                                <span class="text-[10px] font-black text-zinc-400 uppercase tracking-widest">${gun}</span>
-                                <span class="text-[8px] font-bold text-zinc-600 bg-zinc-900 px-2 py-0.5 rounded ml-auto">${list.length} KİŞİ</span>
-                            </div>
-                            <div class="flex flex-wrap gap-2 p-4 rounded-2xl bg-zinc-900/30 border border-white/5">
-                                ${list.map(v => `
-                                    <div class="bg-zinc-800/80 text-zinc-100 px-3 py-2 rounded-xl border border-white/10 shadow-sm">
-                                        <span class="text-[10px] font-bold uppercase whitespace-nowrap">${v.ad}</span>
-                                    </div>
-                                `).join('')}
-                            </div>
+                if(list.length === 0) return '';
+                return `
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center px-1">
+                            <span class="text-[9px] font-black text-zinc-500 uppercase tracking-widest">${gun}</span>
+                            <span class="text-[8px] font-bold text-zinc-700">${list.length} KİŞİ</span>
                         </div>
-                    `;
-                }
-            });
-
-            container.innerHTML = html || '<p class="text-center py-12 text-zinc-700 text-[10px] font-bold uppercase tracking-widest italic">LİSTE HENÜZ BOŞ</p>';
+                        <div class="flex flex-wrap gap-1.5 p-3 rounded-xl bg-zinc-900/30 border border-white/5">
+                            ${list.map(v => `<span class="bg-zinc-800 text-[9px] px-2 py-1 rounded-md font-bold uppercase text-zinc-300 border border-white/5">${v.ad}</span>`).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
 
         document.getElementById('action-btn').addEventListener('click', async () => {
-            const name = document.getElementById('kurye-ad').value.trim().toUpperCase();
-            if(!name || name.split(' ').length < 2) return notify("Lütfen Ad Soyad giriniz.");
-            if(!state.selectedDay) return notify("Lütfen bir gün seçiniz.");
+            const ad = document.getElementById('kurye-ad').value.trim().toUpperCase();
+            if(ad.length < 5) return notify("Ad Soyad Geçersiz");
+            if(!state.selectedDay) return notify("Gün Seçiniz");
 
             try {
                 await runTransaction(db, async (t) => {
                     const snap = await getDocs(collection(db, "vigo_v66_votes"));
                     const all = snap.docs.map(d => d.data());
-                    if(all.find(v => v.ad === name)) throw "Zaten kayıtlısınız!";
+                    if(all.find(v => v.ad === ad)) throw "Zaten Kayıtlısınız";
                     
                     const count = all.filter(v => v.gun === state.selectedDay).length;
                     const max = state.config?.quotas?.[state.selectedDay] || 10;
-                    if(count >= max) throw "Seçilen gün dolmuştur.";
+                    if(count >= max) throw "Gün Doldu";
 
-                    const now = Date.now() + state.offset;
-                    t.set(doc(db, "vigo_v66_votes", name), { ad: name, gun: state.selectedDay, ts: now });
+                    t.set(doc(db, "vigo_v66_votes", ad), { ad, gun: state.selectedDay, ts: Date.now() + state.offset });
                 });
-                localStorage.setItem('vigo_voted_v77', 'true');
-                notify("Kaydınız Başarılı!", true);
+                localStorage.setItem('vigo_voted_v78', 'true');
+                notify("Başarılı!", true);
             } catch(e) { notify(e); }
         });
 
-        // --- Admin Fonksiyonları ---
+        // --- Admin Utils ---
         function renderAdmin() {
-            const rows = document.getElementById('admin-table-rows');
-            rows.innerHTML = state.votes.map(v => `
+            document.getElementById('admin-table-rows').innerHTML = state.votes.map(v => `
                 <tr class="border-b border-white/5">
-                    <td class="p-4 font-black text-white uppercase">${v.ad}</td>
-                    <td class="p-4 text-emerald-500 font-bold uppercase">${v.gun}</td>
-                    <td class="p-4 text-right">
-                        <button onclick="window.delVote('${v.ad}')" class="bg-red-500/10 text-red-500 px-3 py-1.5 rounded-lg font-black text-[9px]">SİL</button>
-                    </td>
+                    <td class="p-3 uppercase font-bold">${v.ad}</td>
+                    <td class="p-3 text-emerald-500 font-black">${v.gun}</td>
+                    <td class="p-3 text-right"><button onclick="window.delV('${v.ad}')" class="text-red-500 font-black">SİL</button></td>
                 </tr>
             `).join('');
-
-            const qCont = document.getElementById('admin-quotas');
-            qCont.innerHTML = GUNLER.map(gun => `
-                <div class="flex items-center justify-between bg-zinc-900/40 p-3 rounded-xl border border-white/5">
-                    <span class="text-[10px] font-black uppercase text-zinc-500">${gun}</span>
-                    <input type="number" onchange="window.updQ('${gun}', this.value)" value="${state.config?.quotas?.[gun] || 10}" 
-                           class="w-14 p-2 rounded-lg text-center font-black text-xs">
+            document.getElementById('admin-quotas').innerHTML = GUNLER.map(gun => `
+                <div class="flex justify-between items-center glass p-3 rounded-xl">
+                    <span class="text-[10px] font-black uppercase">${gun}</span>
+                    <input type="number" onchange="window.updQ('${gun}', this.value)" value="${state.config.quotas[gun]||10}" class="w-12 text-center p-1 rounded bg-black border border-zinc-700">
                 </div>
             `).join('');
         }
 
-        window.delVote = async (id) => { if(confirm("Silinsin mi?")) await deleteDoc(doc(db, "vigo_v66_votes", id)); };
-        window.updQ = async (gun, val) => {
-            const newQ = { ...state.config.quotas, [gun]: parseInt(val) };
-            await setDoc(doc(db, "vigo_v66", "config"), { ...state.config, quotas: newQ }, { merge: true });
+        window.delV = async (id) => { if(confirm("Sil?")) await deleteDoc(doc(db, "vigo_v66_votes", id)); };
+        window.updQ = async (g, v) => {
+            const quotas = { ...state.config.quotas, [g]: parseInt(v) };
+            await setDoc(doc(db, "vigo_v66", "config"), { ...state.config, quotas }, { merge: true });
         };
-        
         document.getElementById('update-date-btn').addEventListener('click', async () => {
-            const val = document.getElementById('open-date-input').value;
-            await setDoc(doc(db, "vigo_v66", "config"), { ...state.config, openDate: val }, { merge: true });
-            notify("Tarih Güncellendi", true);
+            await setDoc(doc(db, "vigo_v66", "config"), { openDate: document.getElementById('open-date-input').value }, { merge: true });
         });
 
         function tick() {
@@ -382,25 +328,23 @@
                 timerEl.innerText = `${h}:${m}:${s}`;
                 timerEl.classList.remove('active-glow');
                 btnEl.disabled = true;
-                btnEl.innerText = "ANKET KAPALI";
-                btnEl.className = "w-full py-5 bg-zinc-900 text-zinc-700 font-black rounded-2xl uppercase text-xs";
+                btnEl.innerText = "ANKET HENÜZ KAPALI";
+                btnEl.className = "w-full py-5 bg-zinc-900 text-zinc-700 font-black rounded-2xl uppercase text-[10px]";
             } else {
                 timerEl.innerText = "SİSTEM AÇIK";
                 timerEl.classList.add('active-glow');
                 btnEl.disabled = false;
                 btnEl.innerText = "KAYDI TAMAMLA";
-                btnEl.className = "w-full py-5 bg-emerald-500 text-black font-black rounded-2xl uppercase text-xs shadow-xl active:scale-95";
+                btnEl.className = "w-full py-5 bg-emerald-500 text-black font-black rounded-2xl uppercase text-xs shadow-xl active:scale-95 transition-all";
             }
-            if(localStorage.getItem('vigo_voted_v77')) document.getElementById('voted-block').classList.remove('hidden');
+            if(localStorage.getItem('vigo_voted_v78')) document.getElementById('voted-block').classList.remove('hidden');
         }
 
-        function notify(msg, success = false) {
+        function notify(msg, s = false) {
             const n = document.getElementById('vigo-notify');
-            const m = document.getElementById('notify-msg');
-            m.innerText = msg;
-            n.querySelector('div').style.borderColor = success ? '#10b981' : '#ef4444';
+            document.getElementById('notify-msg').innerText = msg;
             n.classList.remove('hidden');
-            setTimeout(() => n.classList.add('hidden'), 3000);
+            setTimeout(() => n.classList.add('hidden'), 2500);
         }
 
         setInterval(tick, 1000);
