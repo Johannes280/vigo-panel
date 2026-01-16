@@ -32,7 +32,6 @@
 
         input:focus { border-color: #10b981 !important; box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.1); }
 
-        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: #000; }
         ::-webkit-scrollbar-thumb { background: #222; border-radius: 10px; }
@@ -46,7 +45,7 @@
             <div class="flex justify-between items-center bg-zinc-900/50 p-6 rounded-3xl border border-zinc-800">
                 <div>
                     <h2 class="text-xl font-extrabold italic uppercase tracking-tighter text-emerald-500">Yönetim Paneli</h2>
-                    <p class="text-[9px] text-zinc-500 font-bold uppercase tracking-widest mt-1">Sistem Kontrol ve Raporlama</p>
+                    <p class="text-[9px] text-zinc-500 font-bold uppercase tracking-widest mt-1">Hassas Zamanlama ve Raporlama</p>
                 </div>
                 <button onclick="toggleAdmin(false)" class="p-3 bg-zinc-800 rounded-2xl text-zinc-400 hover:text-white">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l18 18"></path></svg>
@@ -68,8 +67,8 @@
                     <h3 class="text-xs font-black uppercase text-zinc-500 tracking-widest flex items-center gap-2">
                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Veri İşlemleri
                     </h3>
-                    <button onclick="exportToExcel()" class="w-full py-4 bg-emerald-600 text-black rounded-xl font-black text-[10px] uppercase tracking-widest btn-action">Excel Raporu Al</button>
-                    <button onclick="resetSystem()" class="w-full py-4 bg-red-950/30 text-red-500 border border-red-500/20 rounded-xl font-black text-[10px] uppercase tracking-widest btn-action">Sistemi Sıfırla (Kayıtları Sil)</button>
+                    <button onclick="exportToExcel()" class="w-full py-4 bg-emerald-600 text-black rounded-xl font-black text-[10px] uppercase tracking-widest btn-action">Excel (Milisaniye Detaylı)</button>
+                    <button onclick="resetSystem()" class="w-full py-4 bg-red-950/30 text-red-500 border border-red-500/20 rounded-xl font-black text-[10px] uppercase tracking-widest btn-action">Sistemi Sıfırla</button>
                 </div>
             </div>
 
@@ -78,27 +77,24 @@
                 <h3 class="text-xs font-black uppercase text-zinc-500 tracking-widest mb-6 flex items-center gap-2">
                     <span class="w-1.5 h-1.5 rounded-full bg-orange-500"></span> Günlük Kontenjanlar
                 </h3>
-                <div id="quota-settings" class="space-y-3">
-                    <!-- JS ile dolacak -->
-                </div>
+                <div id="quota-settings" class="space-y-3"></div>
                 <button onclick="updateQuotas()" class="w-full mt-6 py-4 bg-zinc-100 text-black rounded-xl font-black text-[10px] uppercase tracking-widest btn-action">Kontenjanları Kaydet</button>
             </div>
         </div>
     </div>
 
-    <!-- ANA UI (Kurye Ekranı) -->
+    <!-- ANA UI -->
     <div id="main-content" class="max-w-md mx-auto p-6 space-y-6 pb-24">
         <header class="flex justify-between items-center py-4">
             <div>
                 <h1 class="text-3xl font-black italic tracking-tighter">VIGO<span class="text-emerald-500">FORCE</span></h1>
-                <p class="text-[9px] text-zinc-500 font-bold uppercase tracking-widest mt-1">v96 - Güvenli Bağlantı</p>
+                <p class="text-[9px] text-zinc-500 font-bold uppercase tracking-widest mt-1">v96 - Milisaniye Hassasiyeti</p>
             </div>
             <button onclick="checkAdminPass()" class="p-3 bg-zinc-900 rounded-2xl border border-zinc-800 text-zinc-600">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
             </button>
         </header>
 
-        <!-- Kurye Formu ve Geri Sayım (v96 ile aynı mantık) -->
         <section class="glass-panel p-8 text-center bg-zinc-900/20 border-emerald-500/10">
             <span class="text-[10px] text-zinc-500 font-bold uppercase tracking-[0.3em] block mb-3">Sistem Açılışı</span>
             <div id="countdown" class="text-4xl font-black italic tracking-tighter tabular-nums text-white">00:00:00</div>
@@ -118,7 +114,6 @@
             </div>
         </div>
 
-        <!-- Kayıt Sonrası Başarı Ekranı -->
         <div id="success-view" class="hidden glass-panel p-10 text-center animate-pulse border-emerald-500/30">
             <div class="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-4 text-emerald-500">
                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
@@ -127,7 +122,6 @@
             <p id="saved-day" class="text-emerald-500 text-xs font-bold mt-2 uppercase"></p>
         </div>
 
-        <!-- Canlı Dağılım -->
         <div class="space-y-4">
             <h3 class="text-[10px] font-black text-zinc-700 uppercase tracking-widest italic flex items-center gap-3">
                 <span>Canlı Dağılım</span>
@@ -168,7 +162,6 @@
             document.getElementById('saved-day').innerText = `SEÇİLEN GÜN: ${state.done}`;
         }
 
-        // Veri Akışları
         onSnapshot(doc(db, "vigo_v96", "config"), (s) => {
             if(s.exists()) {
                 state.config = s.data();
@@ -252,7 +245,6 @@
             } catch (e) { alert("BAĞLANTI HATASI!"); }
         };
 
-        // ADMIN FONKSIYONLARI
         window.checkAdminPass = () => {
             const p = prompt("Yönetici Şifresi:");
             if(p === "vigo44") toggleAdmin(true);
@@ -285,13 +277,37 @@
             alert("Sistem Sıfırlandı!");
         };
 
+        // EXCEL RAPORU - MILISANIYE GÜNCELLEMESİ
         window.exportToExcel = () => {
             if(state.votes.length === 0) return alert("HİÇ KAYIT YOK!");
-            const data = state.votes.map(v => ({ "Kurye Ad Soyad": v.ad, "Seçilen İzin Günü": v.gun, "Kayıt Zamanı": v.ts?.toDate().toLocaleString('tr-TR') }));
+            
+            // Verileri Excel için işle
+            const data = state.votes.map(v => {
+                let formattedTime = "N/A";
+                if(v.ts && v.ts.toDate) {
+                    const date = v.ts.toDate();
+                    const hours = date.getHours().toString().padStart(2, '0');
+                    const minutes = date.getMinutes().toString().padStart(2, '0');
+                    const seconds = date.getSeconds().toString().padStart(2, '0');
+                    const ms = date.getMilliseconds().toString().padStart(3, '0'); // Milisaniye kısmı
+                    
+                    formattedTime = `${date.toLocaleDateString('tr-TR')} ${hours}:${minutes}:${seconds}.${ms}`;
+                }
+                
+                return { 
+                    "Kurye Ad Soyad": v.ad, 
+                    "Seçilen İzin Günü": v.gun, 
+                    "Kayıt Zamanı (ms)": formattedTime 
+                };
+            });
+
+            // Zaman bazlı sıralama (ilk başvuran üstte)
+            data.sort((a, b) => a["Kayıt Zamanı (ms)"].localeCompare(b["Kayıt Zamanı (ms)"]));
+
             const ws = XLSX.utils.json_to_sheet(data);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Vigo İzin Listesi");
-            XLSX.writeFile(wb, `Vigo_Izin_Listesi_${new Date().toLocaleDateString()}.xlsx`);
+            XLSX.writeFile(wb, `Vigo_Izin_Raporu_${new Date().toISOString().slice(0,10)}.xlsx`);
         };
 
         function isStarted() { return new Date(state.config.openDate).getTime() <= Date.now(); }
