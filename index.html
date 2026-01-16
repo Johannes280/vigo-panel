@@ -68,7 +68,7 @@
                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Veri İşlemleri
                     </h3>
                     <button onclick="exportToExcel()" class="w-full py-4 bg-emerald-600 text-black rounded-xl font-black text-[10px] uppercase tracking-widest btn-action">Excel (Milisaniye Detaylı)</button>
-                    <button onclick="resetSystem()" class="w-full py-4 bg-red-950/30 text-red-500 border border-red-500/20 rounded-xl font-black text-[10px] uppercase tracking-widest btn-action">Sistemi Sıfırla</button>
+                    <button onclick="resetSystem()" class="w-full py-4 bg-red-950/30 text-red-500 border border-red-500/20 rounded-xl font-black text-[10px] uppercase tracking-widest btn-action">Sistemi Sıfırla (Kilitleri Kaldır)</button>
                 </div>
             </div>
 
@@ -88,7 +88,7 @@
         <header class="flex justify-between items-center py-4">
             <div>
                 <h1 class="text-3xl font-black italic tracking-tighter">VIGO<span class="text-emerald-500">FORCE</span></h1>
-                <p class="text-[9px] text-zinc-500 font-bold uppercase tracking-widest mt-1">v96 - Milisaniye Hassasiyeti</p>
+                <p class="text-[9px] text-zinc-500 font-bold uppercase tracking-widest mt-1">v96 - Reset Korumalı</p>
             </div>
             <button onclick="checkAdminPass()" class="p-3 bg-zinc-900 rounded-2xl border border-zinc-800 text-zinc-600">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
@@ -100,7 +100,7 @@
             <div id="countdown" class="text-4xl font-black italic tracking-tighter tabular-nums text-white">00:00:00</div>
         </section>
 
-        <div id="input-zone" class="space-y-6 opacity-40 pointer-events-none transition-all duration-500">
+        <div id="input-zone" class="space-y-6 transition-all duration-500">
             <div class="glass-panel p-6 space-y-4 shadow-2xl">
                 <div>
                     <label class="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1 mb-2 block">Kurye Ad Soyad</label>
@@ -150,22 +150,33 @@
 
         const GUNLER = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
         let state = {
-            config: { openDate: new Date().toISOString(), quotas: {} },
+            config: { openDate: new Date().toISOString(), quotas: {}, v: 1 },
             votes: [],
             selected: null,
-            done: localStorage.getItem('vigo_v96_vote')
+            done: null
         };
 
-        if(state.done) {
-            document.getElementById('input-zone').classList.add('hidden');
-            document.getElementById('success-view').classList.remove('hidden');
-            document.getElementById('saved-day').innerText = `SEÇİLEN GÜN: ${state.done}`;
+        // Otomatik Sürüm Kontrolü ve Kilit Açma
+        function checkLocalLock(currentVersion) {
+            const localData = localStorage.getItem('vigo_v96_vote_data');
+            if (localData) {
+                const parsed = JSON.parse(localData);
+                // Eğer telefondaki sürüm veritabanındaki sürümden eskiyse kilidi kaldır
+                if (parsed.v === currentVersion) {
+                    state.done = parsed.day;
+                    showSuccess(parsed.day);
+                } else {
+                    localStorage.removeItem('vigo_v96_vote_data');
+                    state.done = null;
+                }
+            }
         }
 
         onSnapshot(doc(db, "vigo_v96", "config"), (s) => {
             if(s.exists()) {
                 state.config = s.data();
-                document.getElementById('config-date').value = state.config.openDate.slice(0,16);
+                document.getElementById('config-date').value = (state.config.openDate || "").slice(0,16);
+                checkLocalLock(state.config.v || 1);
                 renderQuotas();
             }
             render();
@@ -175,6 +186,12 @@
             state.votes = s.docs.map(d => d.data());
             render();
         });
+
+        function showSuccess(day) {
+            document.getElementById('input-zone').classList.add('hidden');
+            document.getElementById('success-view').classList.remove('hidden');
+            document.getElementById('saved-day').innerText = `SEÇİLEN GÜN: ${day}`;
+        }
 
         function render() {
             const grid = document.getElementById('days-grid');
@@ -240,7 +257,13 @@
                 if(check.exists()) return alert("BU İSİM ZATEN KAYITLI!");
 
                 await setDoc(docRef, { ad: name, gun: state.selected, ts: serverTimestamp() });
-                localStorage.setItem('vigo_v96_vote', state.selected);
+                
+                // Seçim verisini sürüm numarasıyla birlikte kaydet
+                localStorage.setItem('vigo_v96_vote_data', JSON.stringify({
+                    day: state.selected,
+                    v: state.config.v || 1
+                }));
+                
                 location.reload();
             } catch (e) { alert("BAĞLANTI HATASI!"); }
         };
@@ -270,40 +293,36 @@
             alert("Kontenjanlar Güncellendi!");
         };
 
+        // SISTEMI SIFIRLA - SÜRÜMÜ ARTIRARAK KİLİTLERİ AÇAR
         window.resetSystem = async () => {
-            if(!confirm("TÜM KAYITLAR SİLİNECEK! Emin misiniz?")) return;
-            const snap = await getDocs(collection(db, "vigo_v96_votes"));
-            for (const d of snap.docs) { await deleteDoc(doc(db, "vigo_v96_votes", d.id)); }
-            alert("Sistem Sıfırlandı!");
+            if(!confirm("TÜM KAYITLAR SİLİNECEK VE TÜM TELEFONLARIN KİLİDİ AÇILACAK! Emin misiniz?")) return;
+            
+            try {
+                // 1. Tüm oyları sil
+                const snap = await getDocs(collection(db, "vigo_v96_votes"));
+                for (const d of snap.docs) { await deleteDoc(doc(db, "vigo_v96_votes", d.id)); }
+                
+                // 2. Sürüm numarasını artır (Bu, kullanıcıların telefonlarındaki kilidi bozar)
+                const newVersion = (state.config.v || 1) + 1;
+                await setDoc(doc(db, "vigo_v96", "config"), { ...state.config, v: newVersion }, {merge:true});
+                
+                alert("Sistem Sıfırlandı! Tüm kuryeler artık tekrar seçim yapabilir.");
+            } catch (e) {
+                alert("Sıfırlama sırasında bir hata oluştu.");
+            }
         };
 
-        // EXCEL RAPORU - MILISANIYE GÜNCELLEMESİ
         window.exportToExcel = () => {
             if(state.votes.length === 0) return alert("HİÇ KAYIT YOK!");
-            
-            // Verileri Excel için işle
             const data = state.votes.map(v => {
                 let formattedTime = "N/A";
                 if(v.ts && v.ts.toDate) {
                     const date = v.ts.toDate();
-                    const hours = date.getHours().toString().padStart(2, '0');
-                    const minutes = date.getMinutes().toString().padStart(2, '0');
-                    const seconds = date.getSeconds().toString().padStart(2, '0');
-                    const ms = date.getMilliseconds().toString().padStart(3, '0'); // Milisaniye kısmı
-                    
-                    formattedTime = `${date.toLocaleDateString('tr-TR')} ${hours}:${minutes}:${seconds}.${ms}`;
+                    formattedTime = `${date.toLocaleDateString('tr-TR')} ${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}:${date.getSeconds().toString().padStart(2,'0')}.${date.getMilliseconds().toString().padStart(3,'0')}`;
                 }
-                
-                return { 
-                    "Kurye Ad Soyad": v.ad, 
-                    "Seçilen İzin Günü": v.gun, 
-                    "Kayıt Zamanı (ms)": formattedTime 
-                };
+                return { "Kurye Ad Soyad": v.ad, "Seçilen İzin Günü": v.gun, "Kayıt Zamanı (ms)": formattedTime };
             });
-
-            // Zaman bazlı sıralama (ilk başvuran üstte)
             data.sort((a, b) => a["Kayıt Zamanı (ms)"].localeCompare(b["Kayıt Zamanı (ms)"]));
-
             const ws = XLSX.utils.json_to_sheet(data);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Vigo İzin Listesi");
@@ -326,8 +345,10 @@
                 zone.style.pointerEvents = "none";
             } else {
                 el.innerHTML = `<span class="text-emerald-500 animate-pulse italic">SİSTEM AKTİF</span>`;
-                zone.style.opacity = "1";
-                zone.style.pointerEvents = "auto";
+                if(!state.done) {
+                    zone.style.opacity = "1";
+                    zone.style.pointerEvents = "auto";
+                }
             }
             requestAnimationFrame(tick);
         }
