@@ -3,307 +3,396 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VIGO FORCE v97</title>
+    <title>VIGO FORCE ENTERPRISE</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { background-color: #0a0a0a; color: #fff; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
-        .glass-card { background: rgba(30, 30, 30, 0.6); border: 1px solid rgba(255,255,255,0.05); backdrop-filter: blur(10px); border-radius: 20px; }
-        .btn-primary { background: #10b981; color: #000; font-weight: 900; transition: all 0.2s; }
-        .btn-primary:disabled { background: #1f2937; color: #4b5563; }
-        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
-        .shimmer { animation: shimmer 2s infinite linear; background: linear-gradient(90deg, #1f2937 0%, #374151 50%, #1f2937 100%); background-size: 200% 100%; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+        :root {
+            --brand-color: #00ff88;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+        }
+        body { 
+            background-color: var(--bg-color); 
+            color: #1e293b; 
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        .form-container { max-width: 500px; margin: 0 auto; padding: 20px; }
+        .jot-card { 
+            background: var(--card-bg); 
+            border-radius: 12px; 
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+            overflow: hidden;
+            border-top: 6px solid var(--brand-color);
+        }
+        .day-option {
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid #e2e8f0;
+        }
+        .day-option.selected {
+            border-color: var(--brand-color);
+            background-color: rgba(0, 255, 136, 0.05);
+        }
+        .day-option.full {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background-color: #f1f5f9;
+        }
+        .pulsing-dot {
+            width: 8px; height: 8px; background: var(--brand-color);
+            border-radius: 50%; display: inline-block;
+            box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.7);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(0, 255, 136, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 255, 136, 0); }
+        }
+        .loading-shimmer {
+            background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
         @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
     </style>
 </head>
-<body class="p-4">
+<body>
 
-    <!-- Admin Paneli (Şifre: vigo44) -->
-    <div id="adminPanel" class="fixed inset-0 bg-black z-[2000] hidden p-6 overflow-y-auto">
-        <div class="max-w-md mx-auto space-y-6">
-            <div class="flex justify-between items-center">
-                <h2 class="text-xl font-black text-emerald-500 italic">YÖNETİM</h2>
-                <button onclick="closeAdmin()" class="px-4 py-2 bg-zinc-800 rounded-lg text-xs">KAPAT</button>
+    <!-- Yükleme Ekranı -->
+    <div id="loader" class="fixed inset-0 bg-white z-[3000] flex items-center justify-center">
+        <div class="text-center">
+            <div class="w-12 h-12 border-4 border-slate-200 border-t-emerald-500 rounded-full animate-spin mx-auto mb-4"></div>
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Sistem Hazırlanıyor</p>
+        </div>
+    </div>
+
+    <!-- Admin Panel -->
+    <div id="adminPanel" class="fixed inset-0 bg-slate-900/90 backdrop-blur-md z-[2500] hidden p-6 overflow-y-auto">
+        <div class="max-w-lg mx-auto bg-white rounded-2xl p-8 shadow-2xl">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-2xl font-extrabold text-slate-800">Sistem Yönetimi</h2>
+                <button onclick="closeAdmin()" class="text-slate-400 hover:text-slate-600">✕</button>
             </div>
-            <div class="glass-card p-4 space-y-4">
-                <label class="block text-xs text-zinc-500 uppercase font-bold">Açılış Tarihi ve Saati</label>
-                <input type="datetime-local" id="conf_date" class="w-full bg-black border border-zinc-700 p-3 rounded-lg text-white">
-                <div id="conf_quotas" class="grid grid-cols-2 gap-2"></div>
-                <button onclick="saveSettings()" class="w-full py-4 btn-primary rounded-xl text-xs uppercase mt-4">AYARLARI YAYINLA</button>
-            </div>
-            <div class="grid grid-cols-2 gap-2">
-                <button onclick="downloadData()" class="py-3 bg-blue-600 rounded-lg text-[10px] font-bold">EXCEL ÇIKTISI</button>
-                <button onclick="systemReset()" class="py-3 bg-red-900 rounded-lg text-[10px] font-bold uppercase">SİSTEMİ SIFIRLA</button>
+            
+            <div class="space-y-6">
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-2">Anket Başlangıç Tarihi</label>
+                    <input type="datetime-local" id="conf_date" class="w-full border-2 border-slate-100 p-4 rounded-xl focus:border-emerald-500 outline-none transition-all">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4" id="quotaInputs"></div>
+
+                <div class="flex gap-2">
+                    <button onclick="saveConfig()" class="flex-1 bg-emerald-500 text-white py-4 rounded-xl font-bold hover:bg-emerald-600 shadow-lg shadow-emerald-500/20">AYARLARI KAYDET</button>
+                    <button onclick="downloadExcel()" class="bg-blue-500 text-white px-6 rounded-xl font-bold">EXCEL</button>
+                </div>
+                <button onclick="resetAllData()" class="w-full text-red-500 text-xs font-bold py-2 border-2 border-red-500/10 rounded-lg hover:bg-red-50">SİSTEMİ TAMAMEN SIFIRLA</button>
             </div>
         </div>
     </div>
 
-    <!-- Ana Uygulama -->
-    <div class="max-w-md mx-auto space-y-4">
-        <header class="flex justify-between items-center py-2">
+    <div class="form-container">
+        <!-- Logo & Durum -->
+        <header class="flex justify-between items-end mb-6">
             <div>
-                <h1 class="text-2xl font-black italic tracking-tighter">VIGO<span class="text-emerald-500">FORCE</span></h1>
-                <div id="netStatus" class="text-[10px] font-bold text-zinc-500 flex items-center gap-1.5 mt-1">
-                    <span class="status-dot bg-zinc-600"></span> Kontrol ediliyor...
-                </div>
+                <h1 class="text-3xl font-black text-slate-900 tracking-tight italic">VIGO<span class="text-emerald-500">FORCE</span></h1>
+                <p class="text-[10px] font-bold text-slate-400 flex items-center gap-1.5 mt-1">
+                    <span id="statusIndicator" class="pulsing-dot"></span> SİSTEM AKTİF
+                </p>
             </div>
-            <button onclick="openAdmin()" class="text-[10px] font-bold text-zinc-700 border border-zinc-800 px-3 py-1.5 rounded-lg">ADM</button>
+            <button onclick="requestAdmin()" class="bg-slate-200 text-slate-500 text-[10px] font-bold px-3 py-1.5 rounded-full">YÖNETİM</button>
         </header>
 
-        <!-- Sayaç Kartı -->
-        <div class="glass-card p-6 text-center border-b-2 border-emerald-500/20">
-            <p class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Kalan Süre</p>
-            <div id="countdown" class="text-4xl font-black tabular-nums tracking-tight">--:--:--</div>
+        <!-- Sayaç Bölümü -->
+        <div class="jot-card mb-6 p-8 text-center bg-slate-900 text-white border-none">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2">Formun Açılmasına Kalan</p>
+            <div id="countdown" class="text-5xl font-black tabular-nums tracking-tighter">00:00:00</div>
         </div>
 
-        <!-- Kayıt Formu -->
-        <div id="mainForm" class="opacity-30 pointer-events-none transition-opacity duration-500">
-            <div class="glass-card p-5 space-y-4">
+        <!-- Form Bölümü -->
+        <div id="mainFormContainer" class="space-y-6 hidden">
+            <div class="jot-card p-6 space-y-6">
                 <div>
-                    <label class="text-[10px] font-bold text-zinc-500 uppercase ml-1">Kurye Ad Soyad</label>
-                    <input type="text" id="userName" placeholder="Örn: AHMET YILMAZ" class="w-full bg-black/40 border border-zinc-800 p-4 rounded-xl text-emerald-500 font-bold uppercase outline-none focus:border-emerald-500">
-                </div>
-                
-                <div id="daysGrid" class="space-y-2">
-                    <!-- Günler buraya gelecek -->
-                    <div class="h-12 shimmer rounded-xl"></div>
-                    <div class="h-12 shimmer rounded-xl"></div>
+                    <label class="block text-sm font-extrabold text-slate-700 mb-2">Adınız ve Soyadınız <span class="text-red-500">*</span></label>
+                    <input type="text" id="userName" placeholder="Örn: Mehmet Öz" class="w-full border-2 border-slate-100 p-4 rounded-xl focus:border-emerald-500 outline-none transition-all font-semibold uppercase">
                 </div>
 
-                <button id="submitBtn" disabled onclick="submitVote()" class="w-full py-5 btn-primary rounded-2xl shadow-lg shadow-emerald-500/10 uppercase text-xs tracking-widest">
-                    GÜN SEÇİNİZ
+                <div>
+                    <label class="block text-sm font-extrabold text-slate-700 mb-4">Lütfen Çalışmak İstediğiniz Günü Seçin</label>
+                    <div id="daysList" class="space-y-3">
+                        <!-- Günler Dinamik Gelecek -->
+                    </div>
+                </div>
+
+                <button id="submitBtn" onclick="submitForm()" disabled class="w-full bg-emerald-500 text-white py-5 rounded-2xl font-black text-lg shadow-xl shadow-emerald-500/20 disabled:bg-slate-200 disabled:shadow-none transition-all">
+                    KAYDI TAMAMLA
                 </button>
             </div>
         </div>
 
         <!-- Başarı Ekranı -->
-        <div id="successView" class="hidden glass-card p-10 text-center">
-            <div class="w-16 h-16 bg-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+        <div id="successScreen" class="hidden jot-card p-10 text-center animate-in fade-in zoom-in duration-500">
+            <div class="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7"></path></svg>
             </div>
-            <h2 class="font-black text-xl italic uppercase">KAYIT ALINDI</h2>
-            <p id="successDetail" class="text-zinc-500 text-xs mt-2"></p>
-            <button onclick="localStorage.clear(); location.reload();" class="mt-6 text-zinc-600 text-[10px] font-bold uppercase underline">Bilgileri Değiştir</button>
+            <h2 class="text-2xl font-black text-slate-800">KAYDINIZ ALINDI!</h2>
+            <p id="regDetail" class="text-slate-500 mt-2 font-medium"></p>
+            <button onclick="clearMyRegistration()" class="mt-8 text-slate-400 text-xs font-bold hover:underline">Kaydı Değiştir</button>
         </div>
 
-        <!-- Canlı Dağılım -->
-        <div class="space-y-3 pt-4">
-            <h3 class="text-[10px] font-bold text-zinc-600 uppercase tracking-widest px-1">Anlık Dağılım</h3>
-            <div id="liveList" class="space-y-2 text-[11px]"></div>
+        <!-- Dağılım Listesi -->
+        <div id="statsSection" class="mt-10">
+            <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"></path></svg>
+                Canlı Dağılım
+            </h3>
+            <div id="liveFeed" class="space-y-2"></div>
         </div>
     </div>
 
     <script>
-        // Yapılandırma
-        const DB_BASE = "https://vigoanketler-default-rtdb.europe-west1.firebasedatabase.app/v97_stable";
+        const DB_ROOT = "https://vigoanketler-default-rtdb.europe-west1.firebasedatabase.app/v_enterprise";
         const DAYS = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
         
-        let localData = {
+        let state = {
             config: { openDate: null, quotas: {}, version: 1 },
             votes: {},
-            selectedDay: null
+            selectedDay: null,
+            isLocked: true
         };
 
-        // API Fonksiyonu (Fetch API - No Library)
-        async function callAPI(path, method = 'GET', body = null) {
+        // API Katmanı
+        async function api(path, method = 'GET', data = null) {
             try {
-                const options = { method };
-                if (body) options.body = JSON.stringify(body);
-                const response = await fetch(`${DB_BASE}${path}.json`, options);
-                if (!response.ok) throw new Error("Network error");
-                return await response.json();
-            } catch (e) {
-                console.error("API Error:", e);
+                const options = { method, headers: { 'Content-Type': 'application/json' } };
+                if (data) options.body = JSON.stringify(data);
+                const res = await fetch(`${DB_ROOT}${path}.json`, options);
+                return await res.json();
+            } catch (err) {
+                console.error("Connection Error:", err);
                 return null;
             }
         }
 
-        // Veri Senkronizasyonu
-        async function sync() {
+        // Başlangıç Senkronizasyonu
+        async function init() {
             const [cfg, vts] = await Promise.all([
-                callAPI('/config'),
-                callAPI('/votes')
+                api('/config'),
+                api('/votes')
             ]);
 
-            const statusEl = document.getElementById('netStatus');
-            if (cfg) {
-                localData.config = cfg;
-                localData.votes = vts || {};
-                statusEl.innerHTML = '<span class="status-dot bg-emerald-500"></span> Sistem Yayında';
-                statusEl.className = "text-[10px] font-bold text-emerald-500 flex items-center gap-1.5 mt-1";
-                checkLocalStatus(cfg.version);
-                renderUI();
-            } else {
-                statusEl.innerHTML = '<span class="status-dot bg-red-500 animate-pulse"></span> Bağlantı Sorunu';
-                statusEl.className = "text-[10px] font-bold text-red-500 flex items-center gap-1.5 mt-1";
-            }
+            if (cfg) state.config = cfg;
+            state.votes = vts || {};
+            
+            checkMyStatus();
+            renderDays();
+            renderLiveFeed();
+            
+            document.getElementById('loader').classList.add('hidden');
+            startEngine();
         }
 
-        function checkLocalStatus(v) {
-            const saved = localStorage.getItem('vigo_v97_reg');
+        function checkMyStatus() {
+            const saved = localStorage.getItem('vigo_reg_v2');
             if (saved) {
-                const parsed = JSON.parse(saved);
-                if (parsed.v === v) {
-                    document.getElementById('mainForm').classList.add('hidden');
-                    document.getElementById('successView').classList.remove('hidden');
-                    document.getElementById('successDetail').innerText = parsed.day + " günü için kaydınız aktif.";
+                const data = JSON.parse(saved);
+                if (data.version === state.config.version) {
+                    showSuccess(data.day);
                 }
             }
         }
 
-        function renderUI() {
-            // Kontenjan ve Günler
-            const grid = document.getElementById('daysGrid');
+        // UI Render Motoru
+        function renderDays() {
+            const list = document.getElementById('daysList');
             const counts = {};
             DAYS.forEach(d => counts[d] = 0);
-            Object.values(localData.votes).forEach(v => { if(counts[v.day] !== undefined) counts[v.day]++; });
+            Object.values(state.votes).forEach(v => { if(counts[v.day] !== undefined) counts[v.day]++; });
 
-            grid.innerHTML = DAYS.map(day => {
-                const limit = (localData.config.quotas && localData.config.quotas[day]) || 15;
+            list.innerHTML = DAYS.map(day => {
+                const limit = (state.config.quotas && state.config.quotas[day]) || 15;
                 const current = counts[day];
                 const isFull = current >= limit;
-                const isSelected = localData.selectedDay === day;
+                const isSelected = state.selectedDay === day;
 
                 return `
-                    <div onclick="selectDay('${day}', ${isFull})" class="flex items-center justify-between p-4 rounded-xl border-2 transition-all ${isFull ? 'opacity-20 grayscale bg-zinc-900 border-transparent' : isSelected ? 'bg-emerald-500/10 border-emerald-500' : 'bg-zinc-900/50 border-zinc-800'}">
-                        <span class="font-bold text-xs uppercase ${isSelected ? 'text-emerald-500' : 'text-zinc-400'}">${day}</span>
+                    <div onclick="handleDayClick('${day}', ${isFull})" class="day-option flex items-center justify-between p-4 rounded-xl ${isFull ? 'full' : ''} ${isSelected ? 'selected' : ''}">
+                        <div class="flex items-center gap-3">
+                            <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center ${isSelected ? 'border-emerald-500' : 'border-slate-300'}">
+                                ${isSelected ? '<div class="w-2.5 h-2.5 bg-emerald-500 rounded-full"></div>' : ''}
+                            </div>
+                            <span class="font-bold text-slate-700">${day}</span>
+                        </div>
                         <div class="text-right">
-                            <span class="text-[10px] font-black ${isFull ? 'text-red-500' : 'text-emerald-500'}">${current} / ${limit}</span>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-
-            // Canlı Liste
-            const live = document.getElementById('liveList');
-            live.innerHTML = DAYS.map(day => {
-                const names = Object.values(localData.votes).filter(v => v.day === day).map(v => v.name);
-                if (names.length === 0) return '';
-                return `
-                    <div class="glass-card p-3">
-                        <div class="flex justify-between items-center mb-1 text-[9px] font-black text-zinc-600 uppercase italic">
-                            <span>${day}</span>
-                            <span>${names.length} Kurye</span>
-                        </div>
-                        <div class="flex flex-wrap gap-1">
-                            ${names.map(n => `<span class="bg-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded text-[8px] uppercase">${n}</span>`).join('')}
+                            <span class="text-[10px] font-black ${isFull ? 'text-red-500' : 'text-emerald-500'}">
+                                ${current} / ${limit}
+                            </span>
                         </div>
                     </div>
                 `;
             }).join('');
         }
 
-        window.selectDay = (day, full) => {
-            if (full || !isStarted()) return;
-            localData.selectedDay = day;
-            const btn = document.getElementById('submitBtn');
-            btn.disabled = false;
-            btn.innerText = day.toUpperCase() + " GÜNÜNÜ ONAYLA";
-            renderUI();
+        function renderLiveFeed() {
+            const feed = document.getElementById('liveFeed');
+            feed.innerHTML = DAYS.map(day => {
+                const people = Object.values(state.votes).filter(v => v.day === day);
+                if (people.length === 0) return '';
+                return `
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">${day}</span>
+                            <span class="text-[10px] font-bold text-slate-600">${people.length} Kişi</span>
+                        </div>
+                        <div class="flex flex-wrap gap-1.5">
+                            ${people.map(p => `<span class="bg-slate-50 text-slate-500 px-2 py-1 rounded text-[10px] font-semibold">${p.name}</span>`).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Logic
+        window.handleDayClick = (day, full) => {
+            if (full || state.isLocked) return;
+            state.selectedDay = day;
+            document.getElementById('submitBtn').disabled = false;
+            renderDays();
         };
 
-        async function submitVote() {
-            const name = document.getElementById('userName').value.trim().toUpperCase();
-            if (name.length < 4) return alert("Lütfen adınızı soyadınızı yazın.");
+        async function submitForm() {
+            const nameInput = document.getElementById('userName');
+            const name = nameInput.value.trim().toUpperCase();
             
-            const btn = document.getElementById('submitBtn');
-            btn.disabled = true;
-            btn.innerText = "KAYDEDİLİYOR...";
-
-            const id = name.replace(/[^a-zA-Z0-9]/g, '_');
-            const result = await callAPI(`/votes/${id}`, 'PUT', { name, day: localData.selectedDay, t: Date.now() });
-
-            if (result) {
-                localStorage.setItem('vigo_v97_reg', JSON.stringify({ day: localData.selectedDay, v: localData.config.version }));
-                location.reload();
-            } else {
-                alert("Bağlantı hatası! Tekrar deneyin.");
-                btn.disabled = false;
-            }
-        }
-
-        // Sayaç Mantığı
-        function isStarted() {
-            if (!localData.config.openDate) return false;
-            return new Date(localData.config.openDate).getTime() <= Date.now();
-        }
-
-        function updateTimer() {
-            const timerEl = document.getElementById('countdown');
-            const formEl = document.getElementById('mainForm');
-            
-            if (!localData.config.openDate) {
-                timerEl.innerText = "BEKLEMEDE";
+            if (name.length < 5) {
+                nameInput.classList.add('border-red-500');
                 return;
             }
 
-            const target = new Date(localData.config.openDate).getTime();
-            const now = Date.now();
-            const diff = target - now;
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="animate-pulse">İŞLENİYOR...</span>';
 
-            if (diff <= 0) {
-                timerEl.innerHTML = '<span class="text-emerald-500 italic animate-pulse">SİSTEM AÇIK</span>';
-                formEl.style.opacity = "1";
-                formEl.style.pointerEvents = "auto";
+            const id = encodeURIComponent(name).replace(/\./g, '');
+            const result = await api(`/votes/${id}`, 'PUT', { name, day: state.selectedDay, ts: { ".sv": "timestamp" } });
+
+            if (result) {
+                const myReg = { day: state.selectedDay, version: state.config.version };
+                localStorage.setItem('vigo_reg_v2', JSON.stringify(myReg));
+                showSuccess(state.selectedDay);
+                init(); // Refresh data
             } else {
-                const h = Math.floor(diff / 3600000);
-                const m = Math.floor((diff % 3600000) / 60000);
-                const s = Math.floor((diff % 60000) / 1000);
-                timerEl.innerText = 
-                    (h < 10 ? '0'+h : h) + ":" + 
-                    (m < 10 ? '0'+m : m) + ":" + 
-                    (s < 10 ? '0'+s : s);
-                formEl.style.opacity = "0.3";
-                formEl.style.pointerEvents = "none";
+                alert("Bağlantı zayıf. Lütfen tekrar deneyin.");
+                btn.disabled = false;
+                btn.innerText = "KAYDI TAMAMLA";
             }
         }
 
-        // Admin Fonksiyonları
-        window.openAdmin = () => { if(prompt("Şifre:") === "vigo44") document.getElementById('adminPanel').classList.remove('hidden'); };
+        function showSuccess(day) {
+            document.getElementById('mainFormContainer').classList.add('hidden');
+            document.getElementById('successScreen').classList.remove('hidden');
+            document.getElementById('regDetail').innerText = `${day} günü için çalışma talebiniz başarıyla kaydedildi.`;
+        }
+
+        function clearMyRegistration() {
+            if(confirm("Kaydı değiştirmek istediğinize emin misiniz?")) {
+                localStorage.removeItem('vigo_reg_v2');
+                location.reload();
+            }
+        }
+
+        // Motor & Sayaç
+        function startEngine() {
+            setInterval(async () => {
+                const cfg = await api('/config');
+                if (cfg) {
+                    state.config = cfg;
+                    // Eğer admin versiyonu artırdıysa ve biz hala eski versiyondaysak temizle
+                    const saved = JSON.parse(localStorage.getItem('vigo_reg_v2') || '{}');
+                    if (saved.version && saved.version !== cfg.version) {
+                        localStorage.removeItem('vigo_reg_v2');
+                        location.reload();
+                    }
+                }
+                const vts = await api('/votes');
+                if (vts) state.votes = vts;
+                renderDays();
+                renderLiveFeed();
+            }, 5000);
+
+            // Saniyelik Sayaç
+            setInterval(() => {
+                const countdownEl = document.getElementById('countdown');
+                const formEl = document.getElementById('mainFormContainer');
+                
+                if (!state.config.openDate) {
+                    countdownEl.innerText = "BEKLEMEDE";
+                    return;
+                }
+
+                const target = new Date(state.config.openDate).getTime();
+                const now = Date.now();
+                const diff = target - now;
+
+                if (diff <= 0) {
+                    countdownEl.innerHTML = '<span class="text-emerald-400">AKTİF</span>';
+                    state.isLocked = false;
+                    if (!localStorage.getItem('vigo_reg_v2')) {
+                        formEl.classList.remove('hidden');
+                    }
+                } else {
+                    const h = Math.floor(diff / 3600000);
+                    const m = Math.floor((diff % 3600000) / 60000);
+                    const s = Math.floor((diff % 60000) / 1000);
+                    countdownEl.innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+                    state.isLocked = true;
+                }
+            }, 1000);
+        }
+
+        // Admin İşlemleri
+        window.requestAdmin = () => { if(prompt("Yetkili Şifresi:") === "vigo44") document.getElementById('adminPanel').classList.remove('hidden'); };
         window.closeAdmin = () => document.getElementById('adminPanel').classList.add('hidden');
         
-        window.saveSettings = async () => {
+        window.saveConfig = async () => {
             const date = document.getElementById('conf_date').value;
-            const quotas = {};
-            DAYS.forEach(d => {
-                quotas[d] = parseInt(document.getElementById('q_'+d).value) || 15;
-            });
-            await callAPI('/config', 'PATCH', { openDate: date, quotas: quotas });
-            alert("Ayarlar kaydedildi.");
-            sync();
+            const qs = {};
+            DAYS.forEach(d => qs[d] = parseInt(document.getElementById('q_'+d).value) || 15);
+            
+            await api('/config', 'PATCH', { openDate: date, quotas: qs });
+            alert("Sistem güncellendi.");
             closeAdmin();
+            init();
         };
 
-        window.systemReset = async () => {
-            if (!confirm("Tüm kayıtlar silinecek. Emin misiniz?")) return;
-            await callAPI('/votes', 'DELETE');
-            const newVer = (localData.config.version || 1) + 1;
-            await callAPI('/config', 'PATCH', { version: newVer });
-            alert("Sistem sıfırlandı.");
+        window.resetAllData = async () => {
+            if(!confirm("DİKKAT! Tüm kurye kayıtları silinecek ve yeni versiyona geçilecek. Emin misiniz?")) return;
+            await api('/votes', 'DELETE');
+            await api('/config', 'PATCH', { version: (state.config.version || 1) + 1 });
             location.reload();
         };
 
-        window.downloadData = () => {
-            const rows = Object.values(localData.votes).map(v => ({ "İsim": v.name, "Gün": v.day, "Zaman": new Date(v.t).toLocaleString() }));
+        window.downloadExcel = () => {
+            const rows = Object.values(state.votes).map(v => ({ "KURYE ADI": v.name, "SEÇİLEN GÜN": v.day }));
             const ws = XLSX.utils.json_to_sheet(rows);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Liste");
-            XLSX.writeFile(wb, "Vigo_Kurye_Rapor.xlsx");
+            XLSX.utils.book_append_sheet(wb, ws, "Vigo Liste");
+            XLSX.writeFile(wb, "Vigo_Kurye_Programi.xlsx");
         };
 
-        // Başlangıç
-        document.getElementById('conf_quotas').innerHTML = DAYS.map(d => `
+        // Kontenjan Inputlarını Hazırla
+        document.getElementById('quotaInputs').innerHTML = DAYS.map(d => `
             <div>
-                <label class="text-[9px] font-bold text-zinc-500">${d}</label>
-                <input type="number" id="q_${d}" value="15" class="w-full bg-zinc-900 p-2 rounded text-xs mt-1">
+                <label class="text-[10px] font-bold text-slate-400 uppercase">${d}</label>
+                <input type="number" id="q_${d}" value="15" class="w-full border-2 border-slate-100 p-2 rounded-lg mt-1 text-sm">
             </div>
         `).join('');
 
-        // Döngüler
-        setInterval(sync, 4000);
-        setInterval(updateTimer, 1000);
-        sync();
+        init();
     </script>
 </body>
 </html>
