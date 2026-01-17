@@ -30,7 +30,6 @@
 
         input:focus { border-color: var(--accent) !important; }
         
-        /* Smooth transition for operator lag */
         .fade-in { animation: fadeIn 0.5s ease-in; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
@@ -38,7 +37,7 @@
 <body class="antialiased select-none">
 
     <div id="app" class="max-w-md mx-auto p-5 space-y-5 pb-20 fade-in">
-        <!-- Üst Bar ve Bağlantı Durumu -->
+        <!-- Header -->
         <header class="flex justify-between items-center px-2">
             <div>
                 <h1 class="text-2xl font-black tracking-tighter italic">VIGO<span class="text-emerald-500">FORCE</span></h1>
@@ -47,16 +46,16 @@
                     <span id="connection-text" class="text-[8px] font-bold uppercase text-zinc-500 tracking-widest">Bağlantı Kuruluyor...</span>
                 </div>
             </div>
-            <button onclick="adminPrompt()" class="w-10 h-10 glass flex items-center justify-center text-zinc-600">⚙️</button>
+            <button onclick="adminPrompt()" class="w-10 h-10 glass flex items-center justify-center text-zinc-400">⚙️</button>
         </header>
 
-        <!-- Sayaç Alanı -->
+        <!-- Timer -->
         <section class="glass p-8 text-center border-emerald-500/5">
             <span class="text-[10px] text-zinc-500 font-bold uppercase tracking-[0.4em] mb-2 block">Sistem Açılışı</span>
             <div id="timer" class="text-4xl font-black italic tracking-tighter tabular-nums text-white">00:00:00</div>
         </section>
 
-        <!-- Kayıt Formu -->
+        <!-- Form -->
         <div id="form-container" class="opacity-30 pointer-events-none transition-all duration-500">
             <div class="glass p-5 space-y-4">
                 <div class="space-y-2">
@@ -66,7 +65,7 @@
                 </div>
 
                 <div id="days-container" class="grid grid-cols-1 gap-2">
-                    <!-- Günler JS ile dolacak -->
+                    <!-- Days dynamically loaded -->
                 </div>
 
                 <button id="submit-btn" disabled 
@@ -76,35 +75,43 @@
             </div>
         </div>
 
-        <!-- Başarı Mesajı -->
+        <!-- Success Message -->
         <div id="success-msg" class="hidden glass p-10 text-center border-emerald-500/20">
             <div class="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span class="text-2xl">✅</span>
             </div>
             <h2 class="text-xl font-black uppercase">KAYIT ALINDI</h2>
             <p id="result-day" class="text-emerald-500 font-bold text-xs mt-1 uppercase"></p>
-            <button onclick="location.reload()" class="mt-6 text-zinc-600 text-[10px] font-bold uppercase underline">Bilgileri Güncelle</button>
+            <button onclick="clearLocalLock()" class="mt-6 text-zinc-600 text-[10px] font-bold uppercase underline">Bilgileri Güncelle</button>
         </div>
 
-        <!-- Canlı Liste -->
+        <!-- Live List -->
         <div class="space-y-3">
             <h3 class="text-[10px] font-black text-zinc-700 uppercase italic px-2">Anlık Katılım Listesi</h3>
             <div id="live-feed" class="space-y-2"></div>
         </div>
     </div>
 
-    <!-- Admin Paneli (Modal) -->
+    <!-- Admin Panel -->
     <div id="admin-modal" class="fixed inset-0 bg-black/95 z-[999] hidden p-6 overflow-y-auto">
         <div class="max-w-sm mx-auto space-y-6">
             <div class="flex justify-between items-center">
-                <h2 class="text-xl font-black italic">YÖNETİM</h2>
-                <button onclick="closeAdmin()" class="text-zinc-500 font-bold">KAPAT</button>
+                <h2 class="text-xl font-black italic">YÖNETİM PANELİ</h2>
+                <button onclick="closeAdmin()" class="w-10 h-10 flex items-center justify-center text-zinc-500 text-2xl">×</button>
             </div>
             
             <div class="glass p-6 space-y-4">
-                <label class="text-xs font-bold text-zinc-500">SİSTEM AÇILIŞ SAATİ</label>
+                <label class="text-[10px] font-bold text-zinc-500 uppercase">Sistem Açılış Saati</label>
                 <input type="datetime-local" id="set-date" class="w-full bg-black border border-zinc-800 p-3 rounded-lg text-sm">
-                <button onclick="updateSettings()" class="w-full py-3 bg-blue-600 rounded-lg font-bold text-xs">SAATİ GÜNCELLE</button>
+                <button onclick="updateSettings()" class="w-full py-3 bg-blue-600 rounded-lg font-bold text-xs">AYARLARI KAYDET</button>
+            </div>
+
+            <div class="glass p-6 space-y-4">
+                <label class="text-[10px] font-bold text-zinc-500 uppercase italic">Günlük Kotalar (Kişi Sayısı)</label>
+                <div id="quota-inputs" class="space-y-2">
+                    <!-- JS fills this -->
+                </div>
+                <button onclick="updateQuotas()" class="w-full py-3 bg-emerald-600 rounded-lg font-bold text-xs">KOTALARI GÜNCELLE</button>
             </div>
 
             <div class="glass p-6 space-y-4">
@@ -118,7 +125,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, doc, onSnapshot, setDoc, collection, getDocs, deleteDoc, serverTimestamp, initializeFirestore, persistentLocalCache } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // Firebase Ayarları
         const firebaseConfig = {
             apiKey: "AIzaSyBsm4DNTCY681X1foMbx-79YfDqcMXTAcg",
             authDomain: "vigoanketler.firebaseapp.com",
@@ -128,34 +134,38 @@
             appId: "1:458653861576:web:21176fee0e23f7d64007fd"
         };
 
-        // TT Uyumlu Başlatma (Offline yeteneği ve Long Polling zorlaması)
         const app = initializeApp(firebaseConfig);
         const db = initializeFirestore(app, {
             localCache: persistentLocalCache(),
-            experimentalForceLongPolling: true // Türk Telekom Engeli İçin Kritik Ayar
+            experimentalForceLongPolling: true 
         });
 
         const DAYS = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
-        let dbState = { config: { openDate: "2026-01-01T10:00", v: 1 }, votes: [], selectedDay: null };
+        let dbState = { 
+            config: { openDate: "2026-01-01T10:00", v: 1, quotas: {} }, 
+            votes: [], 
+            selectedDay: null 
+        };
 
-        // 1. Veri Dinleme (Real-time)
+        // Initialize Quotas if not exist
+        DAYS.forEach(d => { if(!dbState.config.quotas[d]) dbState.config.quotas[d] = 10; });
+
         function initRealtime() {
-            // Bağlantı durumunu takip et
             const dot = document.getElementById('connection-dot');
             const text = document.getElementById('connection-text');
 
             onSnapshot(doc(db, "force_v98", "config"), (s) => {
                 if(s.exists()) {
                     dbState.config = s.data();
+                    if(!dbState.config.quotas) dbState.config.quotas = {};
+                    DAYS.forEach(d => { if(!dbState.config.quotas[d]) dbState.config.quotas[d] = 10; });
+                    
                     dot.className = "status-dot online";
                     text.innerText = "SİSTEM BAĞLANTISI AKTİF";
                     checkLocalLock();
+                    syncQuotaInputs();
                 }
                 render();
-            }, (err) => {
-                dot.className = "status-dot offline";
-                text.innerText = "TT ENGELİ TESPİT EDİLDİ - YENİLENİYOR";
-                console.log("Bağlantı hatası, otomatik kurtarma devrede...");
             });
 
             onSnapshot(collection(db, "force_v98_data"), (s) => {
@@ -164,18 +174,17 @@
             });
         }
 
-        // 2. Arayüz Çizimi
         function render() {
             const container = document.getElementById('days-container');
             container.innerHTML = DAYS.map(d => {
                 const count = dbState.votes.filter(v => v.day === d).length;
-                const max = 10; // Varsayılan kontenjan
+                const max = dbState.config.quotas[d] || 10;
                 const full = count >= max;
                 const active = dbState.selectedDay === d;
 
                 return `
                     <button onclick="window.selectDay('${d}', ${full})" 
-                            class="flex justify-between items-center p-4 rounded-2xl border transition-all ${active ? 'border-emerald-500 bg-emerald-500/5' : 'border-zinc-900 bg-zinc-950'} ${full ? 'opacity-20' : ''}">
+                            class="flex justify-between items-center p-4 rounded-2xl border transition-all ${active ? 'border-emerald-500 bg-emerald-500/5' : 'border-zinc-900 bg-zinc-950'} ${full ? 'opacity-20 grayscale cursor-not-allowed' : ''}">
                         <span class="text-[11px] font-black uppercase ${active ? 'text-emerald-500' : 'text-zinc-400'}">${d}</span>
                         <span class="text-[10px] font-bold ${full ? 'text-red-500' : 'text-emerald-500'}">${count} / ${max}</span>
                     </button>
@@ -188,7 +197,7 @@
                 if(users.length === 0) return '';
                 return `
                     <div class="glass p-4 border-zinc-900">
-                        <div class="text-[9px] font-black text-zinc-500 uppercase italic mb-2">${d}</div>
+                        <div class="text-[9px] font-black text-zinc-500 uppercase italic mb-2">${d} (${users.length} Kişi)</div>
                         <div class="flex flex-wrap gap-1.5">
                             ${users.map(u => `<span class="bg-zinc-900 text-zinc-400 text-[8px] font-bold px-2 py-1 rounded-md uppercase border border-zinc-800">${u.name}</span>`).join('')}
                         </div>
@@ -197,7 +206,29 @@
             }).join('');
         }
 
-        // 3. Fonksiyonlar
+        function syncQuotaInputs() {
+            const container = document.getElementById('quota-inputs');
+            if(container.innerHTML.trim() !== "") return; // Only fill once or update manually
+            container.innerHTML = DAYS.map(d => `
+                <div class="flex items-center justify-between bg-black/50 p-2 rounded-lg">
+                    <span class="text-[10px] font-bold uppercase text-zinc-400">${d}</span>
+                    <input type="number" data-day="${d}" value="${dbState.config.quotas[d] || 10}" 
+                           class="w-16 bg-zinc-900 border border-zinc-800 p-1 rounded text-center text-xs font-bold text-emerald-500">
+                </div>
+            `).join('');
+        }
+
+        window.updateQuotas = async () => {
+            const inputs = document.querySelectorAll('#quota-inputs input');
+            const newQuotas = {};
+            inputs.forEach(input => {
+                newQuotas[input.dataset.day] = parseInt(input.value) || 0;
+            });
+            
+            await setDoc(doc(db, "force_v98", "config"), { quotas: newQuotas }, {merge:true});
+            alert("Kotalar başarıyla güncellendi!");
+        };
+
         window.selectDay = (day, full) => {
             if(full || !isStarted()) return;
             dbState.selectedDay = day;
@@ -209,13 +240,24 @@
 
         document.getElementById('submit-btn').onclick = async () => {
             const name = document.getElementById('name-input').value.trim().toUpperCase();
-            if(name.length < 5) return alert("AD SOYAD EKSİK VEYA ÇOK KISA!");
+            if(name.length < 4) return alert("AD SOYAD EKSİK VEYA ÇOK KISA!");
             
             const btn = document.getElementById('submit-btn');
-            btn.innerText = "İŞLENİYOR...";
+            btn.innerText = "KAYDEDİLİYOR...";
             btn.disabled = true;
 
             try {
+                // Re-check quota before save
+                const countSnap = await getDocs(collection(db, "force_v98_data"));
+                const currentCount = countSnap.docs.filter(d => d.data().day === dbState.selectedDay).length;
+                const max = dbState.config.quotas[dbState.selectedDay] || 10;
+
+                if(currentCount >= max) {
+                    alert("Maalesef bu gün az önce doldu!");
+                    location.reload();
+                    return;
+                }
+
                 await setDoc(doc(db, "force_v98_data", name), {
                     name: name,
                     day: dbState.selectedDay,
@@ -225,7 +267,7 @@
                 localStorage.setItem('vigo_v98_lock', JSON.stringify({ day: dbState.selectedDay, v: dbState.config.v }));
                 location.reload();
             } catch (e) {
-                alert("Bağlantı hatası! Lütfen tekrar deneyin.");
+                alert("Bağlantı sorunu! Tekrar deneyin.");
                 btn.disabled = false;
             }
         };
@@ -242,9 +284,15 @@
             }
         }
 
+        window.clearLocalLock = () => {
+            if(confirm("Bilgilerinizi güncellemek istediğinize emin misiniz?")) {
+                localStorage.removeItem('vigo_v98_lock');
+                location.reload();
+            }
+        };
+
         function isStarted() { return new Date(dbState.config.openDate) <= new Date(); }
 
-        // Admin İşlemleri
         window.adminPrompt = () => { if(prompt("Şifre:") === "vigo44") document.getElementById('admin-modal').classList.remove('hidden'); };
         window.closeAdmin = () => document.getElementById('admin-modal').classList.add('hidden');
         
@@ -261,24 +309,24 @@
             for (const d of snap.docs) await deleteDoc(doc(db, "force_v98_data", d.id));
             const newV = (dbState.config.v || 1) + 1;
             await setDoc(doc(db, "force_v98", "config"), { v: newV }, {merge:true});
+            localStorage.removeItem('vigo_v98_lock');
             alert("Sistem sıfırlandı!");
             location.reload();
         };
 
         window.downloadExcel = () => {
-            const data = dbState.votes.map(v => ({ "AD SOYAD": v.name, "GÜN": v.day }));
+            const sorted = dbState.votes.sort((a,b) => DAYS.indexOf(a.day) - DAYS.indexOf(b.day));
+            const data = sorted.map(v => ({ "AD SOYAD": v.name, "GÜN": v.day }));
             const ws = XLSX.utils.json_to_sheet(data);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Kurye Listesi");
             XLSX.writeFile(wb, "VigoForce_Liste.xlsx");
         };
 
-        // Sayaç Döngüsü
         function updateTimer() {
             const target = new Date(dbState.config.openDate).getTime();
             const now = Date.now();
             const diff = target - now;
-
             const timerEl = document.getElementById('timer');
             const form = document.getElementById('form-container');
 
